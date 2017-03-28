@@ -48,14 +48,14 @@ public class FollowingFragment extends Fragment {
         recyclerView.setHasFixedSize(true);
         layoutManager = new LinearLayoutManager(getContext());
         recyclerView.setLayoutManager(layoutManager);
-        ArrayList<String> itemList = new ArrayList<>();
-        String[] itemData = new String[]{"Cupcake", "Dounat", "Enclair", "Froyo", "Gingerbread", "Ice Cream Sandwich",
-                                         "Jelly Bean", "Kitkat", "Lollipop", "Marshmallow", "Nougat", "Oreo"};
-        for (String item : itemData)
-            itemList.add(item);
-        adapter = new ListAdapter(itemList);
+        ArrayList<AmazonProduct> itemList = new ArrayList<>();
+        AmazonProduct item = new AmazonProduct("Intel Core i7-7700K", "Grazie alla tecnologia Intel Turbo Boost 2.023, il tuo computer può contare su livelli senza precedenti di potenza e reattività per aumentare la tua produttività. Lo streaming fluido per i contenuti 4K premium e l’intrattenimento HD rendono possibili esperienze immersive a tutto schermo 4K e a 360 gradi, per un gaming incredibilmente intenso e visualizzazione di alta qualità. Potrai inoltre contare sulla potenza per creare, modificare e condividere contenuti 4K e a 360 gradi, il tutto con l’incredibile velocità di trasferimento dei dati della tecnologia Thunderbolt 3. Riscontrerai un livello di prestazioni e versatilità come mai prima d’ora.",
+                                               "EUR 368,77", getResources().getDrawable(R.drawable.product_demo));
+        for (int i = 0; i < 10; i++)
+            itemList.add(item);                 //just a demo
+        adapter = new ListAdapter(itemList, getActivity());
         recyclerView.setAdapter(adapter);
-        ItemTouchHelper.SimpleCallback simpleItemTouchCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT) {
+        ItemTouchHelper.SimpleCallback simpleItemTouchCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.RIGHT) {
             @Override
             public boolean onMove(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, RecyclerView.ViewHolder target) {
                 return false;
