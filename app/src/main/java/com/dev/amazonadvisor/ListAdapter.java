@@ -44,7 +44,7 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.ViewHolder> {
     public void onBindViewHolder(final ViewHolder holder, final int position) {
         ((ImageView)holder.layout.findViewById(R.id.product_image)).setImageDrawable(dataset.get(position).image);
         ((TextView)holder.layout.findViewById(R.id.product_title)).setText(dataset.get(position).title);
-        ((TextView)holder.layout.findViewById(R.id.product_description)).setText(dataset.get(position).description);
+        //((TextView)holder.layout.findViewById(R.id.product_description)).setText(dataset.get(position).description);
         ((TextView)holder.layout.findViewById(R.id.product_price)).setText(dataset.get(position).price);
         ((CardView)holder.layout.findViewById(R.id.card_view)).setOnClickListener(new View.OnClickListener() {
 
