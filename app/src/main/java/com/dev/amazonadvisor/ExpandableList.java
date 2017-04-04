@@ -71,6 +71,14 @@ public class ExpandableList extends BaseExpandableListAdapter {
         TextView listHeader = (TextView) convertView.findViewById(R.id.listHeader);
         listHeader.setTypeface(null, Typeface.BOLD);
         listHeader.setText(headerTitle);
+
+        if (isExpanded) {
+            //groupHolder.img.setImageResource(R.drawable.indicator_down);
+        } else {
+
+        }
+
+
         return convertView;
     }
 

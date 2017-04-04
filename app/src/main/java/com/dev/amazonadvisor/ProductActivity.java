@@ -53,12 +53,11 @@ public class ProductActivity extends AppCompatActivity {
         listDataHeader = new ArrayList<>();
         listHash = new HashMap<>();
 
-        listDataHeader.add("Product details");
+        listDataHeader.add("Other details");
 
         List<String> productDetails = new ArrayList<>();
-        productDetails.add("Seller");
-        productDetails.add("Prime");
-        productDetails.add("Estimated delivery");
+        productDetails.add("Date");
+        productDetails.add("Notification");
 
         listHash.put(listDataHeader.get(0), productDetails);
     }
