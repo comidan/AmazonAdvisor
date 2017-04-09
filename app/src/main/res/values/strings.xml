@@ -18,4 +18,7 @@
     <string name="date_delivery">Estimated delivery</string>
     <string name="prime">Prime</string>
     <string name="seller">Seller</string>
+    <string name="other_details">Other details</string>
+    <string name="date">Added</string>
+    <string name="notification">Notifications</string>
 </resources>

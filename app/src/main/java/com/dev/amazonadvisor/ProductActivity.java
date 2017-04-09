@@ -46,10 +46,10 @@ public class ProductActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.product_activity);
 
-        listView = (ExpandableListView) findViewById(R.id.dropDownList);
+        /*listView = (ExpandableListView) findViewById(R.id.dropDownList);
         initData();
         listAdapter = new ExpandableList(this, listDataHeader, listHash);
-        listView.setAdapter(listAdapter);
+        listView.setAdapter(listAdapter);*/
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         toolbar.setTitle(R.string.app_name);
@@ -65,13 +65,13 @@ public class ProductActivity extends AppCompatActivity {
         mChart.setDragEnabled(true);
         mChart.setScaleEnabled(true);
         mChart.setPinchZoom(true);
-        LimitLine llXAxis = new LimitLine(10f, "Time");
+        /*LimitLine llXAxis = new LimitLine(10f, "Time");
         llXAxis.setLineWidth(4f);
         llXAxis.enableDashedLine(10f, 10f, 0f);
         llXAxis.setLabelPosition(LimitLine.LimitLabelPosition.RIGHT_BOTTOM);
-        llXAxis.setTextSize(10f);
+        llXAxis.setTextSize(10f);*/
         XAxis xAxis = mChart.getXAxis();
-        xAxis.enableGridDashedLine(10f, 10f, 0f);
+        //xAxis.enableGridDashedLine(10f, 10f, 0f);
         LimitLine ll1 = new LimitLine(150f, "Price to notify");
         ll1.setLineWidth(4f);
         ll1.enableDashedLine(10f, 10f, 0f);
@@ -80,18 +80,18 @@ public class ProductActivity extends AppCompatActivity {
         YAxis leftAxis = mChart.getAxisLeft();
         leftAxis.removeAllLimitLines();
         leftAxis.addLimitLine(ll1);
-        leftAxis.setAxisMaximum(450f);
-        leftAxis.setAxisMinimum(100f);
-        leftAxis.enableGridDashedLine(10f, 10f, 0f);
+        leftAxis.setAxisMaximum(250f);
+        leftAxis.setAxisMinimum(125f);
+        //leftAxis.enableGridDashedLine(10f, 10f, 0f);
         leftAxis.setDrawZeroLine(false);
         leftAxis.setDrawLimitLinesBehindData(true);
         mChart.getAxisRight().setEnabled(false);
-        setData(20, 400);
-        mChart.animateX(1500);
+        setData(20, 50);
+        //mChart.animateX(1500);
         List<ILineDataSet> sets = mChart.getData().getDataSets();
         for (ILineDataSet iSet : sets) {
             LineDataSet set = (LineDataSet) iSet;
-            set.setMode(set.getMode() == LineDataSet.Mode.CUBIC_BEZIER ? LineDataSet.Mode.LINEAR : LineDataSet.Mode.CUBIC_BEZIER);
+            set.setMode(set.getMode() == LineDataSet.Mode.LINEAR ? LineDataSet.Mode.LINEAR : LineDataSet.Mode.LINEAR);
         }
         mChart.invalidate();
     }
@@ -99,11 +99,10 @@ public class ProductActivity extends AppCompatActivity {
     private void initData() {
         listDataHeader = new ArrayList<>();
         listHash = new HashMap<>();
-        listDataHeader.add("Product details");
+        listDataHeader.add("Other details");
         List<String> productDetails = new ArrayList<>();
-        productDetails.add("Seller");
-        productDetails.add("Prime");
-        productDetails.add("Estimated delivery");
+        productDetails.add("Date");
+        productDetails.add("Notification");
 
         listHash.put(listDataHeader.get(0), productDetails);
     }
@@ -114,7 +113,7 @@ public class ProductActivity extends AppCompatActivity {
 
         for (int i = 0; i < count; i++) {
 
-            float val = (float) (Math.random() * range) + 3;
+            float val = (float) (Math.random() * range) + 153;
             values.add(new Entry(i, val, null));
         }
 
@@ -127,15 +126,15 @@ public class ProductActivity extends AppCompatActivity {
             mChart.getData().notifyDataChanged();
             mChart.notifyDataSetChanged();
         } else {
-            set1 = new LineDataSet(values, "Price Data Set");
+            set1 = new LineDataSet(values, "Price");
 
             set1.setDrawIcons(false);
 
-            set1.enableDashedLine(10f, 5f, 0f);
+            //set1.enableDashedLine(10f, 5f, 0f);
             set1.enableDashedHighlightLine(10f, 5f, 0f);
-            set1.setColor(Color.BLACK);
-            set1.setCircleColor(Color.BLACK);
-            set1.setLineWidth(1f);
+            set1.setColor(Color.rgb(255, 153, 0));
+            set1.setCircleColor(Color.rgb(35, 47, 62));
+            set1.setLineWidth(2f);
             set1.setCircleRadius(3f);
             set1.setDrawCircleHole(false);
             set1.setValueTextSize(9f);
