@@ -23,7 +23,6 @@ import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
 import com.github.mikephil.charting.utils.Utils;
 
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;

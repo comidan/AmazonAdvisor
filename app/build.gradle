@@ -1,8 +1,14 @@
 apply plugin: 'com.android.application'
 
+if (file('signing.gradle').exists()) {
+    apply from: 'signing.gradle'
+}
+
 android {
     compileSdkVersion 25
     buildToolsVersion "25.0.0"
+
+
     defaultConfig {
         applicationId "com.dev.amazonadvisor"
         minSdkVersion 19
@@ -12,33 +18,41 @@ android {
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
+
+        debug{
+            versionNameSuffix " Debug"
+            minifyEnabled false
+            //shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.releaseConfig
+        }
+
         release {
             minifyEnabled false
+            //shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.releaseConfig
         }
     }
 }
 
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile fileTree(include: ['*.jar'], dir: 'libs')
     androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
     compile 'com.android.support:appcompat-v7:25.2.0'
     testCompile 'junit:junit:4.12'
-
     compile 'com.ogaclejapan.smarttablayout:library:1.6.1@aar'
     compile 'com.ogaclejapan.smarttablayout:utils-v4:1.6.1@aar'
-
     compile('com.mikepenz:materialdrawer:5.8.2@aar') {
         transitive = true
     }
     compile 'com.github.clans:fab:1.6.4'
-
     compile 'com.android.support:recyclerview-v7:25.2.+'
-
     compile 'com.android.support:cardview-v7:25.2.+'
     compile 'com.android.support.constraint:constraint-layout:1.0.1'
-
     compile 'com.github.PhilJay:MPAndroidChart:v3.0.2'
+    compile files('libs/login-with-amazon-sdk.jar')
+    compile files('libs/nano-0.7.0.jar')
 }
