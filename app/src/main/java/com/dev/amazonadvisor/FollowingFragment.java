@@ -4,6 +4,10 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
@@ -23,16 +27,22 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import com.amazon.webservices.awsecommerceservice._2011_08_01.Errors;
+import com.amazon.webservices.awsecommerceservice._2011_08_01.ImageSet;
 import com.amazon.webservices.awsecommerceservice._2011_08_01.Item;
 import com.amazon.webservices.awsecommerceservice._2011_08_01.ItemSearch;
 import com.amazon.webservices.awsecommerceservice._2011_08_01.ItemSearchRequest;
 import com.amazon.webservices.awsecommerceservice._2011_08_01.ItemSearchResponse;
 import com.amazon.webservices.awsecommerceservice._2011_08_01.Items;
 import com.amazon.webservices.awsecommerceservice._2011_08_01.client.AWSECommerceServicePortType_SOAPClient;
+import com.amazon.webservices.awsecommerceservice._2011_08_01.item.ImageSets;
 import com.github.clans.fab.FloatingActionMenu;
 import com.leansoft.nano.ws.SOAPServiceCallback;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
 import java.util.ArrayList;
+import java.util.List;
 
 public class FollowingFragment extends Fragment {
 
@@ -54,19 +64,13 @@ public class FollowingFragment extends Fragment {
         return rootView;
     }
 
+
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         recyclerView.setHasFixedSize(true);
         layoutManager = new LinearLayoutManager(getContext());
         recyclerView.setLayoutManager(layoutManager);
-        ArrayList<AmazonProduct> itemList = new ArrayList<>();
-        AmazonProduct item = new AmazonProduct("Intel Core i7-7700K", "Grazie alla tecnologia Intel Turbo Boost 2.023, il tuo computer può contare su livelli senza precedenti di potenza e reattività per aumentare la tua produttività. Lo streaming fluido per i contenuti 4K premium e l’intrattenimento HD rendono possibili esperienze immersive a tutto schermo 4K e a 360 gradi, per un gaming incredibilmente intenso e visualizzazione di alta qualità. Potrai inoltre contare sulla potenza per creare, modificare e condividere contenuti 4K e a 360 gradi, il tutto con l’incredibile velocità di trasferimento dei dati della tecnologia Thunderbolt 3. Riscontrerai un livello di prestazioni e versatilità come mai prima d’ora.",
-                "EUR 368,77", getResources().getDrawable(R.drawable.product_demo));
-        for (int i = 0; i < 10; i++)
-            itemList.add(item);                 //just a demo
-        adapter = new ListAdapter(itemList, getActivity());
-        recyclerView.setAdapter(adapter);
         recyclerView.setOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
@@ -95,6 +99,7 @@ public class FollowingFragment extends Fragment {
                 new SwipeRefreshLayout.OnRefreshListener() {
                     @Override
                     public void onRefresh() {
+                        initiateAmazonService();
                     }
                 }
         );
@@ -169,10 +174,17 @@ public class FollowingFragment extends Fragment {
 
     private void initiateAmazonService()
     {
+        swipeRefreshLayout.setRefreshing(true);
+        ArrayList<AmazonProduct> products = new ArrayList<>(AmazonProduct.listAll(AmazonProduct.class, "title"));
+        if(products.size() > 0)
+        {
+            adapter = new ListAdapter(products, getActivity());
+            recyclerView.setAdapter(adapter);
+            swipeRefreshLayout.setRefreshing(false);
+            return;
+        }
         AWSECommerceServicePortType_SOAPClient client = AWSECommerceClient.getSharedClient();
         client.setDebug(true);
-
-        // Build request
         ItemSearch request = new ItemSearch();
         request.associateTag = "teg"; // seems any tag is ok
         request.shared = new ItemSearchRequest();
@@ -180,33 +192,18 @@ public class FollowingFragment extends Fragment {
         request.shared.responseGroup = new ArrayList<String>();
         request.shared.responseGroup.add("Images");
         request.shared.responseGroup.add("Small");
-
         ItemSearchRequest itemSearchRequest = new ItemSearchRequest();
         itemSearchRequest.title = "Intel Core i7-7700K";
         request.request = new ArrayList<ItemSearchRequest>();
         request.request.add(itemSearchRequest);
-
-        // authenticate the request
-        // http://docs.aws.amazon.com/AWSECommerceService/latest/DG/NotUsingWSSecurity.html
         AWSECommerceClient.authenticateRequest("ItemSearch");
-        // Make API call and register callbacks
         client.itemSearch(request, new SOAPServiceCallback<ItemSearchResponse>() {
 
             @Override
             public void onSuccess(ItemSearchResponse responseObject) {
-                // success handling logic
                 if (responseObject.items != null && responseObject.items.size() > 0) {
 
-                    Items items = responseObject.items.get(0);
-                    if (items.item != null && items.item.size() > 0) {
-                        Item item = items.item.get(0);
-                        Log.v("Items", items.item.size() + "");
-                        /*Log.v("Item 0", item.asin);
-                        Log.v("Item 0", item.itemAttributes.manufacturer);
-                        Log.v("Item 0", item.detailPageURL);*/
-                    } else {
-
-                    }
+                    new DownloadProductsData().execute(responseObject.items);
 
                 } else {
                     if (responseObject.operationRequest != null && responseObject.operationRequest.errors != null) {
@@ -237,5 +234,38 @@ public class FollowingFragment extends Fragment {
 
         });
 
+    }
+
+    private class DownloadProductsData extends AsyncTask<List<Items>, Void, ArrayList<AmazonProduct>>
+    {
+        @Override
+        protected ArrayList<AmazonProduct> doInBackground(List<Items>... lists) {
+            ArrayList<AmazonProduct> products = new ArrayList<>();
+            List<Items> items = lists[0];
+            if (items != null)
+            {
+                int size = items.size();
+                for(int index = 0; index < size; index++)
+                    for(int subIndex = 0; subIndex < items.get(index).item.size(); subIndex++) {
+                        AmazonProduct product =
+                                new AmazonProduct(items.get(index).item.get(subIndex).itemAttributes.title,
+                                "EUR 345,67", // items.get(index).item.get(subIndex).offerSummary.lowestNewPrice.formattedPrice,
+                                ImageUtils.getByteArrayFromURL(items.get(index).item.get(subIndex).
+                                                imageSets.get(0).imageSet.get(0).
+                                                mediumImage.url));
+                        product.save();
+                        products.add(product);
+                    }
+            }
+            return products;
+        }
+
+        @Override
+        protected void onPostExecute(ArrayList<AmazonProduct> amazonProducts) {
+            super.onPostExecute(amazonProducts);
+            adapter = new ListAdapter(amazonProducts, getActivity());
+            recyclerView.setAdapter(adapter);
+            swipeRefreshLayout.setRefreshing(false);
+        }
     }
 }

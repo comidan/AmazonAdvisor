@@ -1,7 +1,9 @@
 package com.dev.amazonadvisor;
 
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.DashPathEffect;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -55,7 +57,10 @@ public class ProductActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         ViewGroup tab = (ViewGroup) findViewById(R.id.tab);
         tab.addView(LayoutInflater.from(this).inflate(R.layout.tab_indicator, tab, false));
-        ((ImageView)findViewById(R.id.product_image)).setImageDrawable(getResources().getDrawable(R.drawable.product_demo));
+        byte[] productImage = getIntent().getByteArrayExtra("ImageByte");
+        ((ImageView)findViewById(R.id.product_image))
+                    .setImageDrawable(new BitmapDrawable(getResources(),
+                                                         BitmapFactory.decodeByteArray(productImage, 0, productImage.length)));
         ((TextView)findViewById(R.id.product_title)).setText(getIntent().getStringExtra("Title"));
         mChart = (LineChart) findViewById(R.id.line_chart);
         mChart.setDrawGridBackground(false);

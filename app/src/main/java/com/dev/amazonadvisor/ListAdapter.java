@@ -4,6 +4,10 @@ import android.app.Activity;
 import android.app.ActivityOptions;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
+import android.os.Build;
+import android.os.Bundle;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -13,6 +17,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 
 public class ListAdapter extends RecyclerView.Adapter<ListAdapter.ViewHolder> {
@@ -42,7 +47,9 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.ViewHolder> {
 
     @Override
     public void onBindViewHolder(final ViewHolder holder, final int position) {
-        ((ImageView)holder.layout.findViewById(R.id.product_image)).setImageDrawable(dataset.get(position).image);
+        ((ImageView)holder.layout.findViewById(R.id.product_image)).setImageDrawable(new BitmapDrawable(activity.getResources(),
+                                                                                                        ImageUtils.convertByteArrayToBitmap(
+                                                                                                        dataset.get(position).image)));
         ((TextView)holder.layout.findViewById(R.id.product_title)).setText(dataset.get(position).title);
         //((TextView)holder.layout.findViewById(R.id.product_description)).setText(dataset.get(position).description);
         ((TextView)holder.layout.findViewById(R.id.product_price)).setText(dataset.get(position).price);
@@ -54,15 +61,21 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.ViewHolder> {
 
                 View sharedView = ((CardView)holder.layout.findViewById(R.id.card_view));
                 String transitionName = activity.getString(R.string.product_transition);
-
-                ActivityOptions transitionActivityOptions = ActivityOptions.makeSceneTransitionAnimation(activity,
-                                                                                                         sharedView,
-                                                                                                         transitionName);
                 intent.putExtra("Title", dataset.get(position).title);
                 intent.putExtra("Description", dataset.get(position).description);
                 intent.putExtra("Price", dataset.get(position).price);
-                intent.putExtra("ImageID", R.drawable.product_demo);
-                activity.startActivity(intent, transitionActivityOptions.toBundle());
+                Bitmap bitmap = ImageUtils.convertByteArrayToBitmap(dataset.get(position).image);
+                ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
+                intent.putExtra("ImageByte", stream.toByteArray());
+                if(Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP) {
+                    ActivityOptions transitionActivityOptions = ActivityOptions.makeSceneTransitionAnimation(activity,
+                            sharedView,
+                            transitionName);
+                    activity.startActivity(intent, transitionActivityOptions.toBundle());
+                }
+                else
+                    activity.startActivity(intent);
             }
         });
 

@@ -36,6 +36,7 @@ import com.ogaclejapan.smarttablayout.SmartTabLayout;
 import com.ogaclejapan.smarttablayout.utils.v4.FragmentPagerItem;
 import com.ogaclejapan.smarttablayout.utils.v4.FragmentPagerItemAdapter;
 import com.ogaclejapan.smarttablayout.utils.v4.FragmentPagerItems;
+import com.orm.SugarContext;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -82,6 +83,7 @@ public class MainActivity extends AppCompatActivity {
                             }
                         })
                         .build();
+        SugarContext.init(this);
         getSupportActionBar().setDisplayHomeAsUpEnabled(false);
         navigationDrawer.getActionBarDrawerToggle().setDrawerIndicatorEnabled(true);
         viewPager = (ViewPager) findViewById(R.id.viewpager);
@@ -286,5 +288,11 @@ public class MainActivity extends AppCompatActivity {
                 loggedInState = false;
             }
         });
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        SugarContext.terminate();
     }
 }
