@@ -240,6 +240,7 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void run() {
                         updateAccountHeaderOnLogin(name, email);
+                        getSharedPreferences("ACCOUNT_INFO", MODE_PRIVATE).edit().putString("EMAIL", email).apply();
                         authorizeInAppFeatures();
                     }
                 });

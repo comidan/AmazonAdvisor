@@ -55,5 +55,6 @@ dependencies {
     compile 'com.github.PhilJay:MPAndroidChart:v3.0.2'
     compile files('libs/login-with-amazon-sdk.jar')
     compile 'com.github.satyan:sugar:1.4'
+    compile 'org.jsoup:jsoup:1.10.2'
     compile files('libs/nano-0.7.0.jar')
 }

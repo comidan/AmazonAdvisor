@@ -4,6 +4,7 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
@@ -38,11 +39,24 @@ import com.amazon.webservices.awsecommerceservice._2011_08_01.item.ImageSets;
 import com.github.clans.fab.FloatingActionMenu;
 import com.leansoft.nano.ws.SOAPServiceCallback;
 
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class FollowingFragment extends Fragment {
 
@@ -183,7 +197,8 @@ public class FollowingFragment extends Fragment {
             swipeRefreshLayout.setRefreshing(false);
             return;
         }
-        AWSECommerceServicePortType_SOAPClient client = AWSECommerceClient.getSharedClient();
+        new DownloadProductsData().execute();
+        /*AWSECommerceServicePortType_SOAPClient client = AWSECommerceClient.getSharedClient();
         client.setDebug(true);
         ItemSearch request = new ItemSearch();
         request.associateTag = "teg"; // seems any tag is ok
@@ -232,30 +247,123 @@ public class FollowingFragment extends Fragment {
                 Log.v("Fault", fault.faultstring);
             }
 
-        });
+        });*/
+
+
 
     }
 
-    private class DownloadProductsData extends AsyncTask<List<Items>, Void, ArrayList<AmazonProduct>>
+    private class DownloadProductsData extends AsyncTask<Void, Void, ArrayList<AmazonProduct>>
     {
+
+        private URL url;
+        private HttpURLConnection conn;
+        private BufferedReader reader;
+        private ArrayList<String> productIDs = new ArrayList<>();
+        private Element body;
+
         @Override
-        protected ArrayList<AmazonProduct> doInBackground(List<Items>... lists) {
-            ArrayList<AmazonProduct> products = new ArrayList<>();
-            List<Items> items = lists[0];
-            if (items != null)
+        protected ArrayList<AmazonProduct> doInBackground(Void... lists) {
+
+            try
             {
-                int size = items.size();
-                for(int index = 0; index < size; index++)
-                    for(int subIndex = 0; subIndex < items.get(index).item.size(); subIndex++) {
-                        AmazonProduct product =
-                                new AmazonProduct(items.get(index).item.get(subIndex).itemAttributes.title,
-                                "EUR 345,67", // items.get(index).item.get(subIndex).offerSummary.lowestNewPrice.formattedPrice,
-                                ImageUtils.getByteArrayFromURL(items.get(index).item.get(subIndex).
-                                                imageSets.get(0).imageSet.get(0).
-                                                mediumImage.url));
-                        product.save();
-                        products.add(product);
+                url = new URL("https://www.amazon.it/gp/registry/search");
+                Map<String,Object> params = new LinkedHashMap<>();
+                params.put("sortby", "");
+                params.put("index", "it-xml-wishlist");
+                params.put("field-name", getActivity().getSharedPreferences("ACCOUNT_INFO", Context.MODE_PRIVATE)
+                                                      .getString("EMAIL", ""));
+                params.put("field-firstname", "");
+                params.put("field-lastname", "");
+                params.put("nameOrEmail", "");
+                params.put("submit.search", "");
+                StringBuilder postData = new StringBuilder();
+                for (Map.Entry<String,Object> param : params.entrySet()) {
+                    if (postData.length() != 0) postData.append('&');
+                    postData.append(URLEncoder.encode(param.getKey(), "UTF-8"));
+                    postData.append('=');
+                    postData.append(URLEncoder.encode(String.valueOf(param.getValue()), "UTF-8"));
+                }
+                byte[] postDataBytes = postData.toString().getBytes("UTF-8");
+
+                conn = (HttpURLConnection)url.openConnection();
+                conn.setRequestMethod("POST");
+                conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+                conn.setRequestProperty("Content-Length", String.valueOf(postDataBytes.length));
+                conn.setDoOutput(true);
+                conn.getOutputStream().write(postDataBytes);
+
+                reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                StringBuilder result = new StringBuilder();
+                String line;
+                while((line = reader.readLine()) != null)
+                    result.append(line);
+                String finalResult = result.substring(result.indexOf("Advisor"), result.substring(result.indexOf("Advisor"))
+                        .indexOf("<") + result.indexOf("Advisor"));
+                String listAddress = finalResult.substring(finalResult.indexOf("href=\"")).replace("href=\"", "")
+                        .replace("\">", "");
+                System.out.println(listAddress + "\n\n\n");
+                reader.close();
+
+
+                boolean done = false;
+                while(!done)
+                    try
+                    {
+                        initConnection(listAddress);
+                        done = true;
                     }
+                    catch(IOException exc)
+                    {
+                        exc.printStackTrace();
+                    }
+                result = new StringBuilder();
+                while((line = reader.readLine()) != null)
+                    result.append(line);
+                Document doc = Jsoup.parseBodyFragment(result.toString());
+                body = doc.body();
+                Elements elements = body.getElementsByClass("a-spacing-large a-divider-normal");
+                for(int i = 0; i < elements.size(); i++)
+                    System.out.println("VALUE : " + elements.get(i).id());
+
+                for(int i = 0; i < elements.size(); i++)
+                {
+                    result = new StringBuilder(result.substring(result.indexOf("<div id=\"item_")));
+                    String[] id = result.toString().split("\"");
+                    productIDs.add(id[1]);
+                    result = new StringBuilder(result.substring(16, result.length()));
+                }
+
+                //System.out.println(body.text());
+
+            }
+            catch(MalformedURLException exc)
+            {
+                exc.printStackTrace();
+            }
+            catch(UnsupportedEncodingException exc)
+            {
+                exc.printStackTrace();
+            }
+            catch(IOException exc)
+            {
+                exc.printStackTrace();
+            }
+
+            ArrayList<AmazonProduct> products = new ArrayList<>();
+            for(int i = 0; i < productIDs.size(); i++)
+            {
+                Element name = body.getElementById("itemName"+productIDs.get(i).substring(productIDs.get(i).indexOf("_")));
+                Element price = body.getElementById("itemPrice"+productIDs.get(i).substring(productIDs.get(i).indexOf("_")));
+                Element image = body.getElementById("itemImage"+productIDs.get(i).substring(productIDs.get(i).indexOf("_")));
+                String imageContainer = image.html();
+                //Log.v("Seller", body.getElementById(productIDs.get(i)).getElementsByClass("itemAvailOfferedBy").html());
+                AmazonProduct product =
+                        new AmazonProduct(name.html(), price.html(),
+                                         ImageUtils.getByteArrayFromURL(imageContainer
+                                                   .substring(imageContainer.indexOf("src=\"")).split("\"")[1]));
+                product.save();
+                products.add(product);
             }
             return products;
         }
@@ -266,6 +374,13 @@ public class FollowingFragment extends Fragment {
             adapter = new ListAdapter(amazonProducts, getActivity());
             recyclerView.setAdapter(adapter);
             swipeRefreshLayout.setRefreshing(false);
+        }
+
+        private void initConnection(String listAddress) throws IOException
+        {
+            url = new URL("https://www.amazon.it" + listAddress);
+            conn = (HttpURLConnection)url.openConnection();
+            reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
         }
     }
 }
