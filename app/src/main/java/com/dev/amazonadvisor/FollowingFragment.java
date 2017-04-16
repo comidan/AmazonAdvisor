@@ -5,9 +5,6 @@ import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.drawable.BitmapDrawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -17,27 +14,14 @@ import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.helper.ItemTouchHelper;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.view.animation.OvershootInterpolator;
-import android.widget.EditText;
-import android.widget.Toast;
 
-import com.amazon.webservices.awsecommerceservice._2011_08_01.Errors;
-import com.amazon.webservices.awsecommerceservice._2011_08_01.ImageSet;
-import com.amazon.webservices.awsecommerceservice._2011_08_01.Item;
-import com.amazon.webservices.awsecommerceservice._2011_08_01.ItemSearch;
-import com.amazon.webservices.awsecommerceservice._2011_08_01.ItemSearchRequest;
-import com.amazon.webservices.awsecommerceservice._2011_08_01.ItemSearchResponse;
-import com.amazon.webservices.awsecommerceservice._2011_08_01.Items;
-import com.amazon.webservices.awsecommerceservice._2011_08_01.client.AWSECommerceServicePortType_SOAPClient;
-import com.amazon.webservices.awsecommerceservice._2011_08_01.item.ImageSets;
 import com.github.clans.fab.FloatingActionMenu;
-import com.leansoft.nano.ws.SOAPServiceCallback;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -46,7 +30,6 @@ import org.jsoup.select.Elements;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
@@ -55,7 +38,6 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
 public class FollowingFragment extends Fragment {
@@ -324,18 +306,12 @@ public class FollowingFragment extends Fragment {
                 body = doc.body();
                 Elements elements = body.getElementsByClass("a-spacing-large a-divider-normal");
                 for(int i = 0; i < elements.size(); i++)
-                    System.out.println("VALUE : " + elements.get(i).id());
-
-                for(int i = 0; i < elements.size(); i++)
                 {
                     result = new StringBuilder(result.substring(result.indexOf("<div id=\"item_")));
                     String[] id = result.toString().split("\"");
                     productIDs.add(id[1]);
                     result = new StringBuilder(result.substring(16, result.length()));
                 }
-
-                //System.out.println(body.text());
-
             }
             catch(MalformedURLException exc)
             {
@@ -353,15 +329,28 @@ public class FollowingFragment extends Fragment {
             ArrayList<AmazonProduct> products = new ArrayList<>();
             for(int i = 0; i < productIDs.size(); i++)
             {
-                Element name = body.getElementById("itemName"+productIDs.get(i).substring(productIDs.get(i).indexOf("_")));
-                Element price = body.getElementById("itemPrice"+productIDs.get(i).substring(productIDs.get(i).indexOf("_")));
-                Element image = body.getElementById("itemImage"+productIDs.get(i).substring(productIDs.get(i).indexOf("_")));
+                String alphaNumericID = productIDs.get(i).substring(productIDs.get(i).indexOf("_"));
+                Element name = body.getElementById("itemName" + alphaNumericID);
+                Element price = body.getElementById("itemPrice" + alphaNumericID);
+                Element image = body.getElementById("itemImage" + alphaNumericID);
+                String seller = body.getElementById(productIDs.get(i)).getElementsByClass("itemAvailOfferedBy").get(0).html();
+                Elements priceDrops = body.getElementById(productIDs.get(i)).getElementsByClass("a-row itemPriceDrop");
+                String priceDrop = "";
+                if(priceDrops.size() > 0) {
+                    priceDrop = priceDrops.get(0).html();
+
+                    priceDrop = priceDrop.substring(0, priceDrop.indexOf("%"));
+                }
+                boolean prime = !body.getElementById(productIDs.get(i)).getElementsByClass("a-icon a-icon-prime a-icon-small").html().equals("");
+                Elements availabilities = body.getElementById(productIDs.get(i)).getElementsByClass("a-color-base itemAvailMessage");
+                String availability = "";
+                if(availabilities.size() > 0)
+                    availability = availabilities.get(0).html();
                 String imageContainer = image.html();
-                //Log.v("Seller", body.getElementById(productIDs.get(i)).getElementsByClass("itemAvailOfferedBy").html());
-                AmazonProduct product =
-                        new AmazonProduct(name.html(), price.html(),
-                                         ImageUtils.getByteArrayFromURL(imageContainer
-                                                   .substring(imageContainer.indexOf("src=\"")).split("\"")[1]));
+                AmazonProduct product = new AmazonProduct(alphaNumericID, name.html(), price.html(),
+                                                          seller, availability, priceDrop, prime,
+                                                          ImageUtils.getByteArrayFromURL(imageContainer
+                                                                    .substring(imageContainer.indexOf("src=\"")).split("\"")[1]));
                 product.save();
                 products.add(product);
             }

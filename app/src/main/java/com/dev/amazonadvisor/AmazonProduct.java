@@ -1,8 +1,5 @@
 package com.dev.amazonadvisor;
 
-import android.graphics.Bitmap;
-import android.graphics.drawable.Drawable;
-
 import com.orm.SugarRecord;
 
 /**
@@ -11,28 +8,38 @@ import com.orm.SugarRecord;
 
 public class AmazonProduct extends SugarRecord{
 
-    String title, description, price;
+    String title, description, price, productId, seller, availability, priceDrop;
     byte[] image;
+    boolean prime;
 
     public AmazonProduct()
     {
 
     }
 
-    public AmazonProduct(String title, String description, String price, byte[] image)
+    public AmazonProduct(String productId, String title, String description, String price, String seller, String availability, String priceDrop, boolean prime, byte[] image)
     {
+        this.productId = productId;
         this.title = title;
         this.description = description;
         this.price = price;
+        this.seller = seller;
+        this.availability = availability;
+        this.priceDrop = priceDrop;
+        this.prime = prime;
         this.image = image;
     }
 
-    public AmazonProduct(String title, String price, byte[] image)
+    public AmazonProduct(String productId, String title, String price, String seller, String availability, String priceDrop, boolean prime, byte[] image)
     {
+        this.productId = productId;
         this.title = title;
         this.price = price;
+        this.seller = seller;
+        this.availability = availability;
+        this.priceDrop = priceDrop;
+        this.prime = prime;
         this.image = image;
-
         description = "";
     }
 }

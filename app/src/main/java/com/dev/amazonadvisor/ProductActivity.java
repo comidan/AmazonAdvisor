@@ -25,6 +25,8 @@ import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
 import com.github.mikephil.charting.utils.Utils;
 
+import org.w3c.dom.Text;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -62,6 +64,10 @@ public class ProductActivity extends AppCompatActivity {
                     .setImageDrawable(new BitmapDrawable(getResources(),
                                                          BitmapFactory.decodeByteArray(productImage, 0, productImage.length)));
         ((TextView)findViewById(R.id.product_title)).setText(getIntent().getStringExtra("Title"));
+        ((TextView)findViewById(R.id.price)).setText(getIntent().getStringExtra("Price"));
+        ((TextView)findViewById(R.id.delivery_date)).setText(getIntent().getStringExtra("Availability"));
+        ((TextView)findViewById(R.id.seller)).setText(getIntent().getStringExtra("Seller"));
+        ((TextView)findViewById(R.id.price_variation)).setText(getIntent().getStringExtra("PriceDrop"));
         mChart = (LineChart) findViewById(R.id.line_chart);
         mChart.setDrawGridBackground(false);
         mChart.getDescription().setEnabled(false);
