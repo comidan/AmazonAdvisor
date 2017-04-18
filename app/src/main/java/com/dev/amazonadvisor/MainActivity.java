@@ -1,6 +1,7 @@
 package com.dev.amazonadvisor;
 
 import android.app.ProgressDialog;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.Snackbar;
 import android.support.v4.view.ViewPager;
@@ -110,7 +111,14 @@ public class MainActivity extends AppCompatActivity {
                                     Snackbar.LENGTH_LONG).show();
                         }
                     });
-                    fetchUserProfile();
+                    new AsyncTask<Void, Void, Void>(){
+                        @Override
+                        protected Void doInBackground(Void... voids) {
+                            fetchUserProfile();
+                            return null;
+                        }
+                    }.execute();
+
                 }
 
                 @Override
@@ -215,14 +223,37 @@ public class MainActivity extends AppCompatActivity {
 
     private void authorizeInAppFeatures()
     {
-        amazonLoginButton.setVisibility(View.GONE);
-        FragmentPagerItems pages = new FragmentPagerItems(this);
-        pages.add(FragmentPagerItem.of(getString(R.string.following), FollowingFragment.class));
-        pages.add(FragmentPagerItem.of(getString(R.string.lists), GenericFragment.class));
-        pages.add(FragmentPagerItem.of(getString(R.string.advices), GenericFragment.class));
-        FragmentPagerItemAdapter adapter = new FragmentPagerItemAdapter(getSupportFragmentManager(), pages);
-        viewPager.setAdapter(adapter);
-        viewPagerTab.setViewPager(viewPager);
+        new AsyncTask<Void, Void, FragmentPagerItemAdapter>()
+        {
+            @Override
+            protected void onPreExecute() {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        amazonLoginButton.setVisibility(View.GONE);
+                    }
+                });
+            }
+
+            @Override
+            protected FragmentPagerItemAdapter doInBackground(Void... voids) {
+                FragmentPagerItems pages = new FragmentPagerItems(getApplicationContext());
+                pages.add(FragmentPagerItem.of(getString(R.string.following), FollowingFragment.class));
+                pages.add(FragmentPagerItem.of(getString(R.string.lists), GenericFragment.class));
+                pages.add(FragmentPagerItem.of(getString(R.string.advices), GenericFragment.class));
+                FragmentPagerItemAdapter adapter = new FragmentPagerItemAdapter(getSupportFragmentManager(), pages);
+                return adapter;
+            }
+
+            @Override
+            protected void onPostExecute(FragmentPagerItemAdapter fragmentPagerItemAdapter) {
+                viewPager.setAdapter(fragmentPagerItemAdapter);
+                viewPagerTab.setViewPager(viewPager);
+            }
+        }.execute();
+
+
+
     }
 
     private void cancelAuthorizeInAppFeatures()
@@ -248,12 +279,14 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void run() {
                         updateAccountHeaderOnLogin(name, email);
-                        getSharedPreferences("ACCOUNT_INFO", MODE_PRIVATE).edit().putString("EMAIL", email).apply();
-                        authorizeInAppFeatures();
-                        if(dialog != null)
-                            dialog.cancel();
                     }
                 });
+
+
+                getSharedPreferences("ACCOUNT_INFO", MODE_PRIVATE).edit().putString("EMAIL", email).apply();
+                authorizeInAppFeatures();
+                if(dialog != null)
+                    dialog.cancel();
             }
 
             @Override

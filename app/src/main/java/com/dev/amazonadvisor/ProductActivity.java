@@ -5,13 +5,16 @@ import android.graphics.Color;
 import android.graphics.DashPathEffect;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.widget.ExpandableListAdapter;
 import android.widget.ExpandableListView;
 import android.widget.ImageView;
@@ -57,54 +60,31 @@ public class ProductActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         toolbar.setTitle(R.string.app_name);
         setSupportActionBar(toolbar);
-        ViewGroup tab = (ViewGroup) findViewById(R.id.tab);
-        tab.addView(LayoutInflater.from(this).inflate(R.layout.tab_indicator, tab, false));
-        byte[] productImage = getIntent().getByteArrayExtra("ImageByte");
-        ((ImageView)findViewById(R.id.product_image))
-                    .setImageDrawable(new BitmapDrawable(getResources(),
-                                                         BitmapFactory.decodeByteArray(productImage, 0, productImage.length)));
-        ((TextView)findViewById(R.id.product_title)).setText(getIntent().getStringExtra("Title"));
-        ((TextView)findViewById(R.id.price)).setText(getIntent().getStringExtra("Price"));
-        ((TextView)findViewById(R.id.delivery_date)).setText(getIntent().getStringExtra("Availability"));
-        ((TextView)findViewById(R.id.seller)).setText(getIntent().getStringExtra("Seller"));
-        ((TextView)findViewById(R.id.price_variation)).setText(getIntent().getStringExtra("PriceDrop"));
-        ((TextView)findViewById(R.id.rating)).setText(getIntent().getStringExtra("Rating"));
-        mChart = (LineChart) findViewById(R.id.line_chart);
-        mChart.setDrawGridBackground(false);
-        mChart.getDescription().setEnabled(false);
-        mChart.setTouchEnabled(true);
-        mChart.setDragEnabled(true);
-        mChart.setScaleEnabled(true);
-        mChart.setPinchZoom(true);
-        /*LimitLine llXAxis = new LimitLine(10f, "Time");
-        llXAxis.setLineWidth(4f);
-        llXAxis.enableDashedLine(10f, 10f, 0f);
-        llXAxis.setLabelPosition(LimitLine.LimitLabelPosition.RIGHT_BOTTOM);
-        llXAxis.setTextSize(10f);*/
-        XAxis xAxis = mChart.getXAxis();
-        //xAxis.enableGridDashedLine(10f, 10f, 0f);
-        LimitLine ll1 = new LimitLine(150f, "Price to notify");
-        ll1.setLineWidth(4f);
-        ll1.enableDashedLine(10f, 10f, 0f);
-        ll1.setLabelPosition(LimitLine.LimitLabelPosition.RIGHT_BOTTOM);
-        ll1.setTextSize(10f);
-        YAxis leftAxis = mChart.getAxisLeft();
-        leftAxis.removeAllLimitLines();
-        leftAxis.addLimitLine(ll1);
-        leftAxis.setAxisMaximum(250f);
-        leftAxis.setAxisMinimum(125f);
-        //leftAxis.enableGridDashedLine(10f, 10f, 0f);
-        leftAxis.setDrawZeroLine(false);
-        leftAxis.setDrawLimitLinesBehindData(true);
-        mChart.getAxisRight().setEnabled(false);
-        setData(20, 50);
-        //mChart.animateX(1500);
-        List<ILineDataSet> sets = mChart.getData().getDataSets();
-        for (ILineDataSet iSet : sets) {
-            LineDataSet set = (LineDataSet) iSet;
-            set.setMode(set.getMode() == LineDataSet.Mode.LINEAR ? LineDataSet.Mode.LINEAR : LineDataSet.Mode.LINEAR);
-        }
-        mChart.invalidate();
+        final ViewGroup tab = (ViewGroup) findViewById(R.id.tab);
+
+        final View rootView = getWindow().getDecorView().getRootView();
+        rootView.getViewTreeObserver().addOnGlobalLayoutListener(
+                new ViewTreeObserver.OnGlobalLayoutListener() {
+
+                    @Override
+                    public void onGlobalLayout() {
+                        rootView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                        tab.addView(LayoutInflater.from(ProductActivity.this).inflate(R.layout.tab_indicator, tab, false));
+                        byte[] productImage = getIntent().getByteArrayExtra("ImageByte");
+                        ((ImageView)findViewById(R.id.product_image))
+                                .setImageDrawable(new BitmapDrawable(getResources(),
+                                        BitmapFactory.decodeByteArray(productImage, 0, productImage.length)));
+                        ((TextView)findViewById(R.id.product_title)).setText(getIntent().getStringExtra("Title"));
+                        ((TextView)findViewById(R.id.price)).setText(getIntent().getStringExtra("Price"));
+                        ((TextView)findViewById(R.id.delivery_date)).setText(getIntent().getStringExtra("Availability"));
+                        ((TextView)findViewById(R.id.seller)).setText(getIntent().getStringExtra("Seller"));
+                        ((TextView)findViewById(R.id.price_variation)).setText(getIntent().getStringExtra("PriceDrop"));
+                        ((TextView)findViewById(R.id.rating)).setText(getIntent().getStringExtra("Rating"));
+                        ((TextView)findViewById(R.id.prime)).setText(getIntent().getBooleanExtra("Prime", false) ? getString(R.string.prime_available) :
+                                getString(R.string.prime_not_available));
+                        new LoadPriceChart().execute();
+                    }
+                });
     }
 
     private void initData() {
@@ -118,7 +98,75 @@ public class ProductActivity extends AppCompatActivity {
         listHash.put(listDataHeader.get(0), productDetails);
     }
 
-    private void setData(int count, float range) {
+    private class LoadPriceChart extends AsyncTask<Void, Integer, Void>
+    {
+            private static final int INIT_X_AXIS = 0;
+            private static final int INIT_Y_AXIS = 1;
+            private static final int SET_RIGHT_AXIS = 2;
+            private static final int GET_CHART_DATA = 3;
+
+            private XAxis xAxis;
+            private YAxis yAxis;
+            private List<ILineDataSet> sets;
+
+            @Override
+            protected void onPreExecute() {
+                mChart = (LineChart) findViewById(R.id.line_chart);
+                mChart.setDrawGridBackground(false);
+                mChart.getDescription().setEnabled(false);
+                mChart.setTouchEnabled(true);
+                mChart.setDragEnabled(true);
+                mChart.setScaleEnabled(true);
+                mChart.setPinchZoom(true);
+            }
+
+            @Override
+            protected Void doInBackground(Void... voids) {
+                LimitLine ll1 = new LimitLine(150f, "Price to notify");
+                ll1.setLineWidth(4f);
+                ll1.enableDashedLine(10f, 10f, 0f);
+                ll1.setLabelPosition(LimitLine.LimitLabelPosition.RIGHT_BOTTOM);
+                ll1.setTextSize(10f);
+                publishProgress(INIT_Y_AXIS);
+                while(yAxis == null);
+                yAxis.removeAllLimitLines();
+                yAxis.addLimitLine(ll1);
+                yAxis.setAxisMaximum(250f);
+                yAxis.setAxisMinimum(125f);
+                //leftAxis.enableGridDashedLine(10f, 10f, 0f);
+                yAxis.setDrawZeroLine(false);
+                yAxis.setDrawLimitLinesBehindData(true);
+                setData(20, 50, sets);
+                publishProgress(SET_RIGHT_AXIS);
+                publishProgress(GET_CHART_DATA);
+                while(sets == null);
+                //mChart.animateX(1500);
+                for (ILineDataSet iSet : sets) {
+                    LineDataSet set = (LineDataSet) iSet;
+                    set.setMode(set.getMode() == LineDataSet.Mode.LINEAR ? LineDataSet.Mode.LINEAR : LineDataSet.Mode.LINEAR);
+                }
+
+                return null;
+            }
+
+            @Override
+            protected void onProgressUpdate(Integer... progressType) {
+                switch(progressType[0])
+                {
+                    //case INIT_X_AXIS : xAxis = mChart.getXAxis(); break;
+                    case INIT_Y_AXIS : yAxis = mChart.getAxisLeft(); break;
+                    case SET_RIGHT_AXIS : mChart.getAxisRight().setEnabled(true); break;
+                    case GET_CHART_DATA : sets = mChart.getData().getDataSets(); break;
+                }
+            }
+
+            @Override
+            protected void onPostExecute(Void aVoid) {
+                mChart.invalidate();
+            }
+    }
+
+    private void setData(int count, float range, List<ILineDataSet> sets) {
 
         ArrayList<Entry> values = new ArrayList<Entry>();
 
@@ -129,46 +177,73 @@ public class ProductActivity extends AppCompatActivity {
         }
 
         LineDataSet set1;
+        LineData chartData = null;
+        runOnUiThread(new Runnable() {
+            private LineData chartData;
 
-        if (mChart.getData() != null &&
-                mChart.getData().getDataSetCount() > 0) {
-            set1 = (LineDataSet)mChart.getData().getDataSetByIndex(0);
-            set1.setValues(values);
-            mChart.getData().notifyDataChanged();
-            mChart.notifyDataSetChanged();
-        } else {
-            set1 = new LineDataSet(values, "Price");
-
-            set1.setDrawIcons(false);
-
-            //set1.enableDashedLine(10f, 5f, 0f);
-            set1.enableDashedHighlightLine(10f, 5f, 0f);
-            set1.setColor(Color.rgb(255, 153, 0));
-            set1.setCircleColor(Color.rgb(35, 47, 62));
-            set1.setLineWidth(2f);
-            set1.setCircleRadius(3f);
-            set1.setDrawCircleHole(false);
-            set1.setValueTextSize(9f);
-            set1.setDrawFilled(true);
-            set1.setFormLineWidth(1f);
-            set1.setFormLineDashEffect(new DashPathEffect(new float[]{10f, 5f}, 0f));
-            set1.setFormSize(15.f);
-
-            if (Utils.getSDKInt() >= 18) {
-                // fill drawable only supported on api level 18 and above
-                Drawable drawable = ContextCompat.getDrawable(this, R.drawable.graph_fade);
-                set1.setFillDrawable(drawable);
-            }
-            else {
-                set1.setFillColor(Color.BLACK);
+            Runnable setChartData(LineData chartData)
+            {
+                this.chartData = chartData;
+                return this;
             }
 
-            ArrayList<ILineDataSet> dataSets = new ArrayList<ILineDataSet>();
-            dataSets.add(set1);
+            @Override
+            public void run() {
+                chartData = mChart.getData();
+            }
+        }.setChartData(chartData));
 
-            LineData data = new LineData(dataSets);
+         if (chartData!= null &&
+                 chartData.getDataSetCount() > 0) {
+                set1 = (LineDataSet)chartData.getDataSetByIndex(0);
+                set1.setValues(values);
+                chartData.notifyDataChanged();
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        mChart.notifyDataSetChanged();
+                    }
+                });
 
-            mChart.setData(data);
+            }
+            else
+            {
+                set1 = new LineDataSet(values, "Price");
+
+                set1.setDrawIcons(false);
+
+                //set1.enableDashedLine(10f, 5f, 0f);
+                set1.enableDashedHighlightLine(10f, 5f, 0f);
+                set1.setColor(Color.rgb(255, 153, 0));
+                set1.setCircleColor(Color.rgb(35, 47, 62));
+                set1.setLineWidth(2f);
+                set1.setCircleRadius(3f);
+                set1.setDrawCircleHole(false);
+                set1.setDrawValues(false);
+                set1.setDrawFilled(true);
+                set1.setFormLineWidth(1f);
+                set1.setFormLineDashEffect(new DashPathEffect(new float[]{10f, 5f}, 0f));
+                set1.setFormSize(15.f);
+
+                if (Utils.getSDKInt() >= 18) {
+                    // fill drawable only supported on api level 18 and above
+                    Drawable drawable = ContextCompat.getDrawable(this, R.drawable.graph_fade);
+                    set1.setFillDrawable(drawable);
+                }
+                else {
+                    set1.setFillColor(Color.BLACK);
+                }
+
+                ArrayList<ILineDataSet> dataSets = new ArrayList<ILineDataSet>();
+                dataSets.add(set1);
+
+                final LineData data = new LineData(dataSets);
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        mChart.setData(data);
+                    }
+                });
+            }
         }
-    }
 }

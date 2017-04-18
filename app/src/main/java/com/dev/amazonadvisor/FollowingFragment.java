@@ -20,6 +20,7 @@ import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.view.animation.OvershootInterpolator;
+import android.widget.ImageView;
 
 import com.github.clans.fab.FloatingActionMenu;
 
@@ -51,7 +52,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 public class FollowingFragment extends Fragment {
 
     private FloatingActionMenu menuFab;
-    private Handler uiHandler = new Handler();
+    private Handler uiHandler;
     private RecyclerView recyclerView;
     private ListAdapter adapter;
     private RecyclerView.LayoutManager layoutManager;
@@ -103,19 +104,20 @@ public class FollowingFragment extends Fragment {
                 new SwipeRefreshLayout.OnRefreshListener() {
                     @Override
                     public void onRefresh() {
-                        initiateAmazonService();
+                        initiateAmazonService(true);
                     }
                 }
         );
         menuFab.setClosedOnTouchOutside(true);
         menuFab.hideMenuButton(false);
-        initiateAmazonService();
+        initiateAmazonService(false);
     }
 
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
             int delay = 400;
+            uiHandler = new Handler();
             uiHandler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
@@ -142,55 +144,63 @@ public class FollowingFragment extends Fragment {
 
     private void createCustomAnimation() {
 
-        AnimatorSet set = new AnimatorSet();
+        final ImageView fabIcon = menuFab.getMenuIconView();
 
-        ObjectAnimator scaleOutX = ObjectAnimator.ofFloat(menuFab.getMenuIconView(), "scaleX", 1.0f, 0.2f);
-        ObjectAnimator scaleOutY = ObjectAnimator.ofFloat(menuFab.getMenuIconView(), "scaleY", 1.0f, 0.2f);
-
-        ObjectAnimator scaleInX = ObjectAnimator.ofFloat(menuFab.getMenuIconView(), "scaleX", 0.2f, 1.0f);
-        ObjectAnimator scaleInY = ObjectAnimator.ofFloat(menuFab.getMenuIconView(), "scaleY", 0.2f, 1.0f);
-
-        scaleOutX.setDuration(50);
-        scaleOutY.setDuration(50);
-
-        scaleInX.setDuration(150);
-        scaleInY.setDuration(150);
-
-        scaleInX.addListener(new AnimatorListenerAdapter() {
+        new AsyncTask<ImageView, Void, AnimatorSet>()
+        {
             @Override
-            public void onAnimationStart(Animator animation) {
-                Animation rotation = AnimationUtils.loadAnimation(getContext(), R.anim.button_rotation);
-                rotation.setRepeatMode(Animation.RELATIVE_TO_SELF);
-                menuFab.getMenuIconView().startAnimation(rotation);
-                if(menuFab.isOpened())
-                    menuFab.getMenuIconView().setRotation(0f);
-                else
-                    menuFab.getMenuIconView().setRotation(45f);
+            protected AnimatorSet doInBackground(ImageView... imageViews) {
+                AnimatorSet set = new AnimatorSet();
+
+                ObjectAnimator scaleOutX = ObjectAnimator.ofFloat(imageViews[0], "scaleX", 1.0f, 0.2f);
+                ObjectAnimator scaleOutY = ObjectAnimator.ofFloat(imageViews[0], "scaleY", 1.0f, 0.2f);
+
+                ObjectAnimator scaleInX = ObjectAnimator.ofFloat(imageViews[0], "scaleX", 0.2f, 1.0f);
+                ObjectAnimator scaleInY = ObjectAnimator.ofFloat(imageViews[0], "scaleY", 0.2f, 1.0f);
+
+                scaleOutX.setDuration(50);
+                scaleOutY.setDuration(50);
+
+                scaleInX.setDuration(150);
+                scaleInY.setDuration(150);
+
+                scaleInX.addListener(new AnimatorListenerAdapter() {
+                    @Override
+                    public void onAnimationStart(Animator animation) {
+                        Animation rotation = AnimationUtils.loadAnimation(getContext(), R.anim.button_rotation);
+                        rotation.setRepeatMode(Animation.RELATIVE_TO_SELF);
+                        menuFab.getMenuIconView().startAnimation(rotation);
+                        if(menuFab.isOpened())
+                            menuFab.getMenuIconView().setRotation(0f);
+                        else
+                            menuFab.getMenuIconView().setRotation(45f);
+                    }
+                });
+
+                set.play(scaleOutX).with(scaleOutY);
+                set.play(scaleInX).with(scaleInY).after(scaleOutX);
+                set.setInterpolator(new OvershootInterpolator(2));
+
+
+                return set;
             }
-        });
 
-        set.play(scaleOutX).with(scaleOutY);
-        set.play(scaleInX).with(scaleInY).after(scaleOutX);
-        set.setInterpolator(new OvershootInterpolator(2));
+            @Override
+            protected void onPostExecute(AnimatorSet animatorSet) {
+                menuFab.setIconToggleAnimatorSet(animatorSet);
+            }
+        }.execute(fabIcon);
 
-        menuFab.setIconToggleAnimatorSet(set);
+
     }
 
-    private void initiateAmazonService()
+    private void initiateAmazonService(boolean forced)
     {
         swipeRefreshLayout.setRefreshing(true);
-        ArrayList<AmazonProduct> products = new ArrayList<>(AmazonProduct.listAll(AmazonProduct.class, "title"));
-        if(products.size() > 0)
-        {
-            adapter = new ListAdapter(products, getActivity());
-            recyclerView.setAdapter(adapter);
-            swipeRefreshLayout.setRefreshing(false);
-            return;
-        }
-        new DownloadProductsData().execute();
+        new FetchProductsData().execute(forced);
     }
 
-    private class DownloadProductsData extends AsyncTask<Void, Void, ArrayList<AmazonProduct>>
+    private class FetchProductsData extends AsyncTask<Boolean, Void, ArrayList<AmazonProduct>>
     {
 
         private static final String AWS_ACCESS_KEY_ID = "AKIAIIZGFFBWXZXJSQNA";
@@ -205,8 +215,16 @@ public class FollowingFragment extends Fragment {
         private Element body;
 
         @Override
-        protected ArrayList<AmazonProduct> doInBackground(Void... lists) {
+        protected ArrayList<AmazonProduct> doInBackground(Boolean... values) {
 
+            ArrayList<AmazonProduct> products = new ArrayList<>(AmazonProduct.listAll(AmazonProduct.class, "title"));
+            if(!values[0] && products.size() > 0)
+            {
+                adapter = new ListAdapter(products, getActivity());
+                return products;
+            }
+            else if(values[0])
+                AmazonProduct.deleteAll(AmazonProduct.class);
             try
             {
                 url = new URL("https://" + getLocalizedURL() + "/gp/registry/search");
@@ -289,7 +307,7 @@ public class FollowingFragment extends Fragment {
                 exc.printStackTrace();
             }
 
-            ArrayList<AmazonProduct> products = new ArrayList<>();
+            products = new ArrayList<>();
             for(int i = 0; i < productIDs.size(); i++)
             {
 
@@ -313,20 +331,19 @@ public class FollowingFragment extends Fragment {
                 requestUrl = helper.sign(params);
 
                 AmazonProductContainer currentProduct = fetchProductData(requestUrl);
-                AmazonProduct product = new AmazonProduct(productIDs.get(i), currentProduct.title, currentProduct.price,
-                                                          currentProduct.seller, currentProduct.availability, "", currentProduct.prime,
-                                                          ImageUtils.getByteArrayFromURL(currentProduct.mediumImagesURL),
-                                                          currentProduct.rating);
+                AmazonProduct product = new AmazonProduct(productIDs.get(i), currentProduct.title, currentProduct.price,currentProduct.seller,
+                                                          currentProduct.availability, "", currentProduct.prime,
+                                                          ImageUtils.getByteArrayFromURL(currentProduct.mediumImagesURL), currentProduct.rating);
                 product.save();
                 products.add(product);
             }
+            adapter = new ListAdapter(products, getActivity());
             return products;
         }
 
         @Override
         protected void onPostExecute(ArrayList<AmazonProduct> amazonProducts) {
             super.onPostExecute(amazonProducts);
-            adapter = new ListAdapter(amazonProducts, getActivity());
             recyclerView.setAdapter(adapter);
             swipeRefreshLayout.setRefreshing(false);
         }
@@ -381,7 +398,7 @@ public class FollowingFragment extends Fragment {
                 container.itemsAsNew = Integer.parseInt(itemsAsNew.getTextContent());
                 container.itemAsUsed = Integer.parseInt(itemsAsUsed.getTextContent());
                 container.prime = hasPrime.getTextContent().equals("1");
-                container.availability = availability.getTextContent();
+                container.availability = availability != null ? availability.getTextContent() : "";
                 for(int i = 0; i < features.getLength(); i++)
                     container.features.add(features.item(i).getTextContent());
                 for(int i = 0; i < itemDimension.item(0).getChildNodes().getLength(); i++)
@@ -395,7 +412,7 @@ public class FollowingFragment extends Fragment {
 
         private String getRatingFromASIN(String ASIN) throws IOException
         {
-            url = new URL("http://" + getLocalizedURL() + "/gp/customer-reviews/widgets/average-customer-review/popover/ref=dpx_acr_pop_?contextId=dpx&asin=" + ASIN);
+            url = new URL("https://" + getLocalizedURL() + "/gp/customer-reviews/widgets/average-customer-review/popover/ref=dpx_acr_pop_?contextId=dpx&asin=" + ASIN);
             conn = (HttpURLConnection)url.openConnection();
             reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
             StringBuilder result = new StringBuilder();

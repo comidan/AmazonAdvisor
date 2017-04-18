@@ -64,7 +64,7 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.ViewHolder> {
                 intent.putExtra("Price", dataset.get(position).price);
                 intent.putExtra("PriceDrop", dataset.get(position).priceDrop);
                 intent.putExtra("Availability", dataset.get(position).availability);
-                intent.putExtra("Prime", dataset.get(position).price);
+                intent.putExtra("Prime", dataset.get(position).prime);
                 intent.putExtra("Seller", dataset.get(position).seller);
                 intent.putExtra("Rating", dataset.get(position).rating);
                 Bitmap bitmap = ImageUtils.convertByteArrayToBitmap(dataset.get(position).image);

@@ -27,5 +27,7 @@
     <string name="date">Added</string>
     <string name="notification">Notifications</string>
     <string name="rating">Rating</string>
-    <string name="init_loading">Syncing your Amazon Advisor list, please wait</string>
+    <string name="init_loading">Syncing with your Amazon account, please wait</string>
+    <string name="prime_available">Available</string>
+    <string name="prime_not_available">Not available</string>
 </resources>
