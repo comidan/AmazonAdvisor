@@ -24,11 +24,14 @@ import android.view.animation.OvershootInterpolator;
 import com.github.clans.fab.FloatingActionMenu;
 
 import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 import java.io.BufferedReader;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
@@ -37,8 +40,13 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 
 public class FollowingFragment extends Fragment {
 
@@ -180,63 +188,15 @@ public class FollowingFragment extends Fragment {
             return;
         }
         new DownloadProductsData().execute();
-        /*AWSECommerceServicePortType_SOAPClient client = AWSECommerceClient.getSharedClient();
-        client.setDebug(true);
-        ItemSearch request = new ItemSearch();
-        request.associateTag = "teg"; // seems any tag is ok
-        request.shared = new ItemSearchRequest();
-        request.shared.searchIndex = "Electronics";
-        request.shared.responseGroup = new ArrayList<String>();
-        request.shared.responseGroup.add("Images");
-        request.shared.responseGroup.add("Small");
-        ItemSearchRequest itemSearchRequest = new ItemSearchRequest();
-        itemSearchRequest.title = "Intel Core i7-7700K";
-        request.request = new ArrayList<ItemSearchRequest>();
-        request.request.add(itemSearchRequest);
-        AWSECommerceClient.authenticateRequest("ItemSearch");
-        client.itemSearch(request, new SOAPServiceCallback<ItemSearchResponse>() {
-
-            @Override
-            public void onSuccess(ItemSearchResponse responseObject) {
-                if (responseObject.items != null && responseObject.items.size() > 0) {
-
-                    new DownloadProductsData().execute(responseObject.items);
-
-                } else {
-                    if (responseObject.operationRequest != null && responseObject.operationRequest.errors != null) {
-                        Errors errors = responseObject.operationRequest.errors;
-                        if (errors.error != null && errors.error.size() > 0) {
-                            com.amazon.webservices.awsecommerceservice._2011_08_01.errors.Error error = errors.error.get(0);
-                            Log.v("Error", error.message);
-                        } else {
-
-                        }
-                    } else {
-
-                    }
-                }
-
-            }
-
-            @Override
-            public void onFailure(Throwable error, String errorMessage) { // http or parsing error
-
-            }
-
-            @Override
-            public void onSOAPFault(Object soapFault) { // soap fault
-                com.leansoft.nano.soap11.Fault fault = (com.leansoft.nano.soap11.Fault)soapFault;
-                Log.v("Fault", fault.faultstring);
-            }
-
-        });*/
-
-
-
     }
 
     private class DownloadProductsData extends AsyncTask<Void, Void, ArrayList<AmazonProduct>>
     {
+
+        private static final String AWS_ACCESS_KEY_ID = "AKIAIIZGFFBWXZXJSQNA";
+        private static final String AWS_SECRET_KEY = "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";
+
+        private final String ENDPOINT = getLocalizedAWSURL();
 
         private URL url;
         private HttpURLConnection conn;
@@ -249,7 +209,7 @@ public class FollowingFragment extends Fragment {
 
             try
             {
-                url = new URL("https://www.amazon.it/gp/registry/search");
+                url = new URL("https://" + getLocalizedURL() + "/gp/registry/search");
                 Map<String,Object> params = new LinkedHashMap<>();
                 params.put("sortby", "");
                 params.put("index", "it-xml-wishlist");
@@ -302,14 +262,17 @@ public class FollowingFragment extends Fragment {
                 result = new StringBuilder();
                 while((line = reader.readLine()) != null)
                     result.append(line);
-                Document doc = Jsoup.parseBodyFragment(result.toString());
+                org.jsoup.nodes.Document doc = Jsoup.parseBodyFragment(result.toString());
                 body = doc.body();
                 Elements elements = body.getElementsByClass("a-spacing-large a-divider-normal");
                 for(int i = 0; i < elements.size(); i++)
                 {
                     result = new StringBuilder(result.substring(result.indexOf("<div id=\"item_")));
-                    String[] id = result.toString().split("\"");
-                    productIDs.add(id[1]);
+                    String temp = result.toString();
+                    temp = temp.substring(temp.indexOf("asin="));
+                    temp = temp.substring(0, temp.indexOf("&"));
+                    temp = temp.substring(5);
+                    productIDs.add(temp);
                     result = new StringBuilder(result.substring(16, result.length()));
                 }
             }
@@ -329,28 +292,31 @@ public class FollowingFragment extends Fragment {
             ArrayList<AmazonProduct> products = new ArrayList<>();
             for(int i = 0; i < productIDs.size(); i++)
             {
-                String alphaNumericID = productIDs.get(i).substring(productIDs.get(i).indexOf("_"));
-                Element name = body.getElementById("itemName" + alphaNumericID);
-                Element price = body.getElementById("itemPrice" + alphaNumericID);
-                Element image = body.getElementById("itemImage" + alphaNumericID);
-                String seller = body.getElementById(productIDs.get(i)).getElementsByClass("itemAvailOfferedBy").get(0).html();
-                Elements priceDrops = body.getElementById(productIDs.get(i)).getElementsByClass("a-row itemPriceDrop");
-                String priceDrop = "";
-                if(priceDrops.size() > 0) {
-                    priceDrop = priceDrops.get(0).html();
 
-                    priceDrop = priceDrop.substring(0, priceDrop.indexOf("%"));
+                SignedRequestsHelper helper;
+                try {
+                    helper = SignedRequestsHelper.getInstance(ENDPOINT, AWS_ACCESS_KEY_ID, AWS_SECRET_KEY);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    continue;
                 }
-                boolean prime = !body.getElementById(productIDs.get(i)).getElementsByClass("a-icon a-icon-prime a-icon-small").html().equals("");
-                Elements availabilities = body.getElementById(productIDs.get(i)).getElementsByClass("a-color-base itemAvailMessage");
-                String availability = "";
-                if(availabilities.size() > 0)
-                    availability = availabilities.get(0).html();
-                String imageContainer = image.html();
-                AmazonProduct product = new AmazonProduct(alphaNumericID, name.html(), price.html(),
-                                                          seller, availability, priceDrop, prime,
-                                                          ImageUtils.getByteArrayFromURL(imageContainer
-                                                                    .substring(imageContainer.indexOf("src=\"")).split("\"")[1]));
+
+                String requestUrl = null;
+
+                Map<String, String> params = new HashMap<String, String>();
+                params.put("Service", "AWSECommerceService");
+                params.put("AssociateTag", "amazonadvis06-20");
+                params.put("Version", "2009-03-31");
+                params.put("Operation", "ItemLookup");
+                params.put("ItemId", productIDs.get(i));
+                params.put("ResponseGroup", "Large");
+                requestUrl = helper.sign(params);
+
+                AmazonProductContainer currentProduct = fetchProductData(requestUrl);
+                AmazonProduct product = new AmazonProduct(productIDs.get(i), currentProduct.title, currentProduct.price,
+                                                          currentProduct.seller, currentProduct.availability, "", currentProduct.prime,
+                                                          ImageUtils.getByteArrayFromURL(currentProduct.mediumImagesURL),
+                                                          currentProduct.rating);
                 product.save();
                 products.add(product);
             }
@@ -367,9 +333,125 @@ public class FollowingFragment extends Fragment {
 
         private void initConnection(String listAddress) throws IOException
         {
-            url = new URL("https://www.amazon.it" + listAddress);
+            url = new URL("https://" + getLocalizedURL() + listAddress);
             conn = (HttpURLConnection)url.openConnection();
             reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+        }
+
+        private AmazonProductContainer fetchProductData(String requestUrl) {
+            AmazonProductContainer container = new AmazonProductContainer();
+            try
+            {
+                DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+                DocumentBuilder db = dbf.newDocumentBuilder();
+                Document doc = null;
+                int done = 0;
+                while(done == 0)
+                    try
+                    {
+                        doc = db.parse(requestUrl);
+                        done = 1;
+                    }
+                    catch (FileNotFoundException exc)
+                    {
+                        exc.printStackTrace();
+                    }
+                Node title = doc.getElementsByTagName("Title").item(0);
+                Node smallImageURL = doc.getElementsByTagName("SmallImage").item(0).getFirstChild();
+                Node mediumImageURL = doc.getElementsByTagName("MediumImage").item(0).getFirstChild();
+                Node largeImageURL = doc.getElementsByTagName("LargeImage").item(0).getFirstChild();
+                Node manufacturer = doc.getElementsByTagName("Manufacturer").item(0);
+                Node seller = doc.getElementsByTagName("Publisher").item(0);
+                Node model = doc.getElementsByTagName("Model").item(0);
+                Node price = doc.getElementsByTagName("ListPrice").item(0).getLastChild();
+                Node itemsAsNew = doc.getElementsByTagName("TotalNew").item(0);
+                Node itemsAsUsed = doc.getElementsByTagName("TotalUsed").item(0);
+                Node hasPrime = doc.getElementsByTagName("IsEligibleForPrime").item(0);
+                Node availability = doc.getElementsByTagName("Availability").item(0);
+                NodeList features = doc.getElementsByTagName("Feature");
+                NodeList itemDimension = doc.getElementsByTagName("ItemDimensions");
+                container.title = title.getTextContent();
+                container.smallImagesURL = smallImageURL.getTextContent();
+                container.mediumImagesURL = mediumImageURL.getTextContent();
+                container.largeImageURL = largeImageURL.getTextContent();
+                container.manufacturer = manufacturer.getTextContent();
+                container.seller = seller.getTextContent();
+                container.model = model.getTextContent();
+                container.price = price.getTextContent();
+                container.itemsAsNew = Integer.parseInt(itemsAsNew.getTextContent());
+                container.itemAsUsed = Integer.parseInt(itemsAsUsed.getTextContent());
+                container.prime = hasPrime.getTextContent().equals("1");
+                container.availability = availability.getTextContent();
+                for(int i = 0; i < features.getLength(); i++)
+                    container.features.add(features.item(i).getTextContent());
+                for(int i = 0; i < itemDimension.item(0).getChildNodes().getLength(); i++)
+                    container.itemDimension.add(Integer.parseInt(itemDimension.item(0).getChildNodes().item(i).getTextContent()));
+                container.rating = getRatingFromASIN(doc.getElementsByTagName("Item").item(0).getFirstChild().getTextContent());
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+            return container;
+        }
+
+        private String getRatingFromASIN(String ASIN) throws IOException
+        {
+            url = new URL("http://" + getLocalizedURL() + "/gp/customer-reviews/widgets/average-customer-review/popover/ref=dpx_acr_pop_?contextId=dpx&asin=" + ASIN);
+            conn = (HttpURLConnection)url.openConnection();
+            reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            StringBuilder result = new StringBuilder();
+            String line;
+            while((line = reader.readLine()) != null)
+                result.append(line);
+            org.jsoup.nodes.Document doc = Jsoup.parseBodyFragment(result.toString());
+            Element body = doc.body();
+            return body.getElementsByClass("a-size-base a-color-secondary").html();
+        }
+
+        private Locale getLocale()
+        {
+            return getActivity().getResources().getConfiguration().locale;
+        }
+
+        private String getLocalizedAWSURL()
+        {
+            Locale locale = getLocale();
+
+            if(locale.equals(Locale.ITALY))
+                return "webservices.amazon.it";
+            if(locale.equals(Locale.US))
+                return "ecs.amazonaws.com";
+            if(locale.equals(Locale.CANADA))
+                return "ecs.amazonaws.ca";
+            if(locale.equals(Locale.UK))
+                return "ecs.amazonaws.co.uk";
+            if(locale.equals(Locale.FRANCE))
+                return "ecs.amazonaws.fr";
+            if(locale.equals(Locale.GERMANY))
+                return "ecs.amazonaws.de";
+            if(locale.equals(Locale.JAPAN))
+                return "ecs.amazonaws.jp";
+            return "ecs.amazonaws.com";
+        }
+
+        private String getLocalizedURL()
+        {
+            Locale locale = getLocale();
+
+            if(locale.equals(Locale.ITALY))
+                return "www.amazon.it";
+            if(locale.equals(Locale.US))
+                return "www.amazon.com";
+            if(locale.equals(Locale.CANADA))
+                return "www.amazon.ca";
+            if(locale.equals(Locale.UK))
+                return "www.amazon.co.uk";
+            if(locale.equals(Locale.FRANCE))
+                return "www.amazon.fr";
+            if(locale.equals(Locale.GERMANY))
+                return "www.amazon.de";
+            if(locale.equals(Locale.JAPAN))
+                return "www.amazon.jp";
+            return "www.amazon.com";
         }
     }
 }

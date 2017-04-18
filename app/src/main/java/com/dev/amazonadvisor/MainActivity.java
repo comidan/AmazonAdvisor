@@ -1,5 +1,6 @@
 package com.dev.amazonadvisor;
 
+import android.app.ProgressDialog;
 import android.os.Bundle;
 import android.support.design.widget.Snackbar;
 import android.support.v4.view.ViewPager;
@@ -49,6 +50,7 @@ public class MainActivity extends AppCompatActivity {
     private ViewPager viewPager;
     private SmartTabLayout viewPagerTab;
     private Drawer navigationDrawer;
+    private ProgressDialog dialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -102,6 +104,7 @@ public class MainActivity extends AppCompatActivity {
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
+                            dialog.cancel();
                             loggedInState = true;
                             Snackbar.make(mainLayout,
                                     "Logged in successful",
@@ -116,6 +119,7 @@ public class MainActivity extends AppCompatActivity {
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
+                            dialog.cancel();
                             Snackbar.make(mainLayout,
                                           "Error during authorization.  Please try again.",
                                           Snackbar.LENGTH_LONG).show();
@@ -130,6 +134,7 @@ public class MainActivity extends AppCompatActivity {
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
+                            dialog.cancel();
                             Snackbar.make(mainLayout,
                                     "Authorization cancelled",
                                     Snackbar.LENGTH_LONG).show();
@@ -142,6 +147,10 @@ public class MainActivity extends AppCompatActivity {
             amazonLoginButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
+                    dialog = ProgressDialog.show(MainActivity.this, "", getString(R.string.init_loading), true);
+                    dialog.setCancelable(false);
+                    dialog.setCanceledOnTouchOutside(false);
+                    dialog.setIndeterminate(true);
                     AuthorizationManager.authorize(
                             new AuthorizeRequest.Builder(requestContext)
                                     .addScopes(ProfileScope.profile(), ProfileScope.postalCode())

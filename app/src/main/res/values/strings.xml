@@ -26,4 +26,6 @@
     <string name="other_details">Other details</string>
     <string name="date">Added</string>
     <string name="notification">Notifications</string>
+    <string name="rating">Rating</string>
+    <string name="init_loading">Syncing your Amazon Advisor list, please wait</string>
 </resources>

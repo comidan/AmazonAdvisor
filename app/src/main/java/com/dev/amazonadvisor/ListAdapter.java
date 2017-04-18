@@ -2,12 +2,10 @@ package com.dev.amazonadvisor;
 
 import android.app.Activity;
 import android.app.ActivityOptions;
-import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Build;
-import android.os.Bundle;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -53,13 +51,13 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.ViewHolder> {
         ((TextView)holder.layout.findViewById(R.id.product_title)).setText(dataset.get(position).title);
         //((TextView)holder.layout.findViewById(R.id.product_description)).setText(dataset.get(position).description);
         ((TextView)holder.layout.findViewById(R.id.product_price)).setText(dataset.get(position).price);
-        ((CardView)holder.layout.findViewById(R.id.card_view)).setOnClickListener(new View.OnClickListener() {
+        holder.layout.findViewById(R.id.card_view).setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View view) {
                 Intent intent = new Intent(activity, ProductActivity.class);
 
-                View sharedView = ((CardView)holder.layout.findViewById(R.id.card_view));
+                View sharedView = holder.layout.findViewById(R.id.card_view);
                 String transitionName = activity.getString(R.string.product_transition);
                 intent.putExtra("Title", dataset.get(position).title);
                 intent.putExtra("Description", dataset.get(position).description);
@@ -68,6 +66,7 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.ViewHolder> {
                 intent.putExtra("Availability", dataset.get(position).availability);
                 intent.putExtra("Prime", dataset.get(position).price);
                 intent.putExtra("Seller", dataset.get(position).seller);
+                intent.putExtra("Rating", dataset.get(position).rating);
                 Bitmap bitmap = ImageUtils.convertByteArrayToBitmap(dataset.get(position).image);
                 ByteArrayOutputStream stream = new ByteArrayOutputStream();
                 bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);

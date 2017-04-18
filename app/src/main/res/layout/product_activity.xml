@@ -1,7 +1,6 @@
 <android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:fab="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
@@ -140,14 +139,15 @@
             <ScrollView
                 android:layout_width="0dp"
                 android:layout_height="0dp"
-                android:layout_marginBottom="0dp"
                 android:layout_marginLeft="8dp"
                 android:layout_marginRight="8dp"
                 android:layout_marginTop="16dp"
                 card_view:layout_constraintBottom_toBottomOf="parent"
                 card_view:layout_constraintLeft_toLeftOf="parent"
                 card_view:layout_constraintRight_toRightOf="parent"
-                card_view:layout_constraintTop_toBottomOf="@+id/product_title">
+                card_view:layout_constraintTop_toBottomOf="@+id/product_title"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="8dp">
 
                 <android.support.constraint.ConstraintLayout
                     android:layout_width="match_parent"
@@ -182,7 +182,7 @@
                         android:textAlignment="center"
                         card_view:layout_constraintLeft_toLeftOf="parent"
                         card_view:layout_constraintRight_toRightOf="parent"
-                        card_view:layout_constraintTop_toBottomOf="@id/line_chart" />
+                        card_view:layout_constraintTop_toBottomOf="@+id/line_chart" />
 
                     <TextView
                         android:id="@+id/textView2"
@@ -192,7 +192,6 @@
                         android:layout_marginLeft="8dp"
                         android:layout_marginRight="8dp"
                         android:layout_marginStart="8dp"
-                        android:layout_marginTop="0dp"
                         android:text="@string/price_details"
                         android:textColor="@color/accent"
                         android:textSize="16sp"
@@ -200,7 +199,7 @@
                         card_view:layout_constraintHorizontal_bias="0.0"
                         card_view:layout_constraintLeft_toLeftOf="parent"
                         card_view:layout_constraintRight_toRightOf="parent"
-                        card_view:layout_constraintTop_toBottomOf="@id/price_trend" />
+                        card_view:layout_constraintTop_toBottomOf="@+id/price_trend" />
 
                     <TextView
                         android:id="@+id/textView5"
@@ -220,7 +219,7 @@
 
                     <TextView
                         android:id="@+id/price"
-                        android:layout_width="100dp"
+                        android:layout_width="200dp"
                         android:layout_height="wrap_content"
                         android:layout_marginEnd="8dp"
                         android:layout_marginLeft="8dp"
@@ -252,13 +251,13 @@
 
                     <TextView
                         android:id="@+id/price_variation"
-                        android:layout_width="100dp"
+                        android:layout_width="200dp"
                         android:layout_height="wrap_content"
                         android:layout_marginEnd="8dp"
                         android:layout_marginLeft="8dp"
                         android:layout_marginRight="8dp"
                         android:layout_marginStart="8dp"
-                        android:layout_marginTop="8dp"
+                        android:layout_marginTop="7dp"
                         android:textAlignment="textEnd"
                         android:textStyle="bold"
                         card_view:layout_constraintHorizontal_chainStyle="spread_inside"
@@ -282,7 +281,7 @@
 
                     <TextView
                         android:id="@+id/price_average"
-                        android:layout_width="100dp"
+                        android:layout_width="200dp"
                         android:layout_height="wrap_content"
                         android:layout_marginEnd="8dp"
                         android:layout_marginLeft="8dp"
@@ -303,7 +302,7 @@
                         android:layout_marginLeft="8dp"
                         android:layout_marginRight="8dp"
                         android:layout_marginStart="8dp"
-                        android:layout_marginTop="8dp"
+                        android:layout_marginTop="7dp"
                         android:text="@string/target_price"
                         card_view:layout_constraintLeft_toLeftOf="parent"
                         card_view:layout_constraintRight_toLeftOf="@+id/price_target"
@@ -311,13 +310,13 @@
 
                     <TextView
                         android:id="@+id/price_target"
-                        android:layout_width="100dp"
+                        android:layout_width="200dp"
                         android:layout_height="wrap_content"
                         android:layout_marginEnd="8dp"
                         android:layout_marginLeft="8dp"
                         android:layout_marginRight="8dp"
                         android:layout_marginStart="8dp"
-                        android:layout_marginTop="8dp"
+                        android:layout_marginTop="7dp"
                         android:textAlignment="textEnd"
                         android:textStyle="bold"
                         card_view:layout_constraintLeft_toRightOf="@+id/textView8"
@@ -357,8 +356,8 @@
 
                     <TextView
                         android:id="@+id/delivery_date"
-                        android:layout_width="100dp"
-                        android:layout_height="wrap_content"
+                        android:layout_width="200dp"
+                        android:layout_height="31dp"
                         android:layout_marginEnd="8dp"
                         android:layout_marginLeft="8dp"
                         android:layout_marginRight="8dp"
@@ -386,7 +385,7 @@
 
                     <TextView
                         android:id="@+id/prime"
-                        android:layout_width="100dp"
+                        android:layout_width="200dp"
                         android:layout_height="wrap_content"
                         android:layout_marginEnd="8dp"
                         android:layout_marginLeft="8dp"
@@ -401,15 +400,15 @@
 
                     <TextView
                         android:id="@+id/seller"
-                        android:layout_width="100dp"
+                        android:layout_width="200dp"
                         android:layout_height="wrap_content"
                         android:layout_marginEnd="8dp"
                         android:layout_marginLeft="8dp"
                         android:layout_marginRight="8dp"
                         android:layout_marginStart="8dp"
                         android:layout_marginTop="8dp"
-                        android:textAlignment="textEnd"
                         android:textStyle="bold"
+                        android:textAlignment="textEnd"
                         card_view:layout_constraintHorizontal_bias="1.0"
                         card_view:layout_constraintLeft_toRightOf="@+id/textView14"
                         card_view:layout_constraintRight_toRightOf="parent"
@@ -430,6 +429,36 @@
                         card_view:layout_constraintTop_toBottomOf="@+id/textView11" />
 
                     <TextView
+                        android:id="@+id/rating"
+                        android:layout_width="200dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="8dp"
+                        android:layout_marginLeft="8dp"
+                        android:layout_marginRight="8dp"
+                        android:layout_marginStart="8dp"
+                        android:layout_marginTop="8dp"
+                        android:textAlignment="textEnd"
+                        android:textStyle="bold"
+                        card_view:layout_constraintHorizontal_bias="1.0"
+                        card_view:layout_constraintLeft_toRightOf="@+id/textView15"
+                        card_view:layout_constraintRight_toRightOf="parent"
+                        card_view:layout_constraintTop_toBottomOf="@+id/seller" />
+
+                    <TextView
+                        android:id="@+id/textView15"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="8dp"
+                        android:layout_marginLeft="8dp"
+                        android:layout_marginRight="8dp"
+                        android:layout_marginStart="8dp"
+                        android:layout_marginTop="8dp"
+                        android:text="@string/rating"
+                        card_view:layout_constraintLeft_toLeftOf="parent"
+                        card_view:layout_constraintRight_toLeftOf="@+id/rating"
+                        card_view:layout_constraintTop_toBottomOf="@+id/textView14" />
+
+                    <TextView
                         android:id="@+id/textView3"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
@@ -443,7 +472,9 @@
                         android:textStyle="bold"
                         card_view:layout_constraintLeft_toLeftOf="parent"
                         card_view:layout_constraintRight_toRightOf="parent"
-                        card_view:layout_constraintTop_toBottomOf="@+id/textView14" />
+                        card_view:layout_constraintTop_toBottomOf="@+id/textView15"
+                        android:layout_marginStart="8dp"
+                        android:layout_marginEnd="8dp" />
 
 
                     <TextView
@@ -456,11 +487,13 @@
                         android:text="@string/date"
                         card_view:layout_constraintLeft_toLeftOf="parent"
                         card_view:layout_constraintRight_toLeftOf="@+id/added_date"
-                        card_view:layout_constraintTop_toBottomOf="@+id/textView3" />
+                        card_view:layout_constraintTop_toBottomOf="@+id/textView3"
+                        android:layout_marginStart="8dp"
+                        android:layout_marginEnd="8dp" />
 
                     <TextView
                         android:id="@+id/added_date"
-                        android:layout_width="100dp"
+                        android:layout_width="200dp"
                         android:layout_height="wrap_content"
                         android:layout_marginLeft="8dp"
                         android:layout_marginRight="8dp"
@@ -469,7 +502,9 @@
                         android:textStyle="bold"
                         card_view:layout_constraintLeft_toRightOf="@+id/dateTitle"
                         card_view:layout_constraintRight_toRightOf="parent"
-                        card_view:layout_constraintTop_toBottomOf="@+id/textView3" />
+                        card_view:layout_constraintTop_toBottomOf="@+id/textView3"
+                        android:layout_marginStart="8dp"
+                        android:layout_marginEnd="8dp" />
 
                     <TextView
                         android:id="@+id/notificationTitle"
@@ -481,11 +516,13 @@
                         android:text="@string/notification"
                         card_view:layout_constraintLeft_toLeftOf="parent"
                         card_view:layout_constraintRight_toLeftOf="@+id/textViewNotification"
-                        card_view:layout_constraintTop_toBottomOf="@+id/dateTitle" />
+                        card_view:layout_constraintTop_toBottomOf="@+id/dateTitle"
+                        android:layout_marginStart="8dp"
+                        android:layout_marginEnd="8dp" />
 
                     <TextView
                         android:id="@+id/textViewNotification"
-                        android:layout_width="100dp"
+                        android:layout_width="200dp"
                         android:layout_height="wrap_content"
                         android:layout_marginLeft="8dp"
                         android:layout_marginRight="8dp"
@@ -496,7 +533,9 @@
                         card_view:layout_constraintLeft_toRightOf="@+id/notificationTitle"
                         card_view:layout_constraintRight_toRightOf="parent"
                         card_view:layout_constraintTop_toBottomOf="@+id/dateTitle"
-                        card_view:layout_constraintBottom_toBottomOf="parent" />
+                        card_view:layout_constraintBottom_toBottomOf="parent"
+                        android:layout_marginStart="8dp"
+                        android:layout_marginEnd="8dp" />
 
                     <!--
                     <ImageView
@@ -530,6 +569,13 @@
 
         </android.support.constraint.ConstraintLayout>
     </android.support.v7.widget.CardView>
+
+    <android.support.constraint.Guideline
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/guideline"
+        app:layout_constraintGuide_begin="20dp"
+        android:orientation="vertical" />
 
 </android.support.constraint.ConstraintLayout>
 
