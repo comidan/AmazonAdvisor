@@ -104,7 +104,6 @@ public class MainActivity extends AppCompatActivity {
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            dialog.cancel();
                             loggedInState = true;
                             Snackbar.make(mainLayout,
                                     "Logged in successful",
@@ -186,7 +185,7 @@ public class MainActivity extends AppCompatActivity {
                                         cancelAuthorizeInAppFeatures();
                                         RelativeLayout mainLayout = (RelativeLayout) findViewById(R.id.main_relative_layout);
                                         Snackbar.make(mainLayout,
-                                                "Logged in successful",
+                                                "Logged out successful",
                                                 Snackbar.LENGTH_LONG).show();
                                     }
                                 });
@@ -251,6 +250,8 @@ public class MainActivity extends AppCompatActivity {
                         updateAccountHeaderOnLogin(name, email);
                         getSharedPreferences("ACCOUNT_INFO", MODE_PRIVATE).edit().putString("EMAIL", email).apply();
                         authorizeInAppFeatures();
+                        if(dialog != null)
+                            dialog.cancel();
                     }
                 });
             }
