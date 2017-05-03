@@ -1,15 +1,21 @@
 package com.dev.amazonadvisor;
 
+import android.app.Activity;
+import android.content.Intent;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.DashPathEffect;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.constraint.ConstraintLayout;
+import android.support.design.widget.Snackbar;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -20,6 +26,7 @@ import android.widget.ExpandableListView;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.github.clans.fab.FloatingActionMenu;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.LimitLine;
 import com.github.mikephil.charting.components.XAxis;
@@ -30,20 +37,32 @@ import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
 import com.github.mikephil.charting.utils.Utils;
 
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 
 /**
  * Created by daniele on 28/03/2017.
  */
 
-public class ProductActivity extends AppCompatActivity {
+public class ProductActivity extends AppCompatActivity implements AmazonAWSDetails {
     private ExpandableListView listView;
     private ExpandableListAdapter listAdapter;
     private List<String> listDataHeader;
     private HashMap<String, List<String>> listHash;
     //private FloatingActionMenu menuFab;
+    private RecyclerView recyclerView;
+    private RecyclerView.LayoutManager layoutManager;
+    private FloatingActionMenu menuFab;
 
     private LineChart mChart;
 
@@ -82,6 +101,50 @@ public class ProductActivity extends AppCompatActivity {
                         ((TextView)findViewById(R.id.rating)).setText(getIntent().getStringExtra("Rating"));
                         ((TextView)findViewById(R.id.prime)).setText(getIntent().getBooleanExtra("Prime", false) ? getString(R.string.prime_available) :
                                 getString(R.string.prime_not_available));
+                        ((TextView)findViewById(R.id.warranty)).setText(getIntent().getStringExtra("Warranty"));
+                        menuFab = (FloatingActionMenu) findViewById(R.id.product_menu);
+                        menuFab.findViewById(R.id.add_to_cart).setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View view) {
+                                new AsyncTask<Void, Void, Void>()
+                                {
+                                    @Override
+                                    protected Void doInBackground(Void... voids) {
+                                        String cartID = getSharedPreferences("AMAZON_ADVISOR", MODE_PRIVATE).getString("CART_ID", null);
+                                        String HMAC = getSharedPreferences("AMAZON_ADVISOR", MODE_PRIVATE).getString("HMAC", null);
+                                        AmazonLocaleUtils.setLocale(ProductActivity.this);
+                                        if(HMAC == null || cartID == null) {
+                                            String cartURL = createCartURL(getIntent().getStringExtra("ASIN"));
+                                            String[] data = getCartDetails(cartURL);
+                                            cartID = data[0];
+                                            HMAC = data[1];
+                                        }
+                                        addProductToCart(cartID, getIntent().getStringExtra("ASIN"), HMAC);
+                                        uploadCartContent(cartID, HMAC, "amazonadvis06-20");
+                                        return null;
+                                    }
+
+                                    @Override
+                                    protected void onPostExecute(Void aVoid) {
+                                        super.onPostExecute(aVoid);
+                                        final ConstraintLayout mainLayout = (ConstraintLayout) findViewById(R.id.main_constraint_layout);
+                                        Snackbar.make(mainLayout, "Successful added to cart", Snackbar.LENGTH_LONG).show();
+                                    }
+                                }.execute();
+                            }
+                        });
+                        menuFab.findViewById(R.id.share_link).setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View view) {
+                                shareLinkURL(getIntent().getStringExtra("Title"), getIntent().getStringExtra("URL"));
+                            }
+                        });
+                        menuFab.findViewById(R.id.open_link).setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View view) {
+                                openURL(getIntent().getStringExtra("URL"));
+                            }
+                        });
                         new LoadPriceChart().execute();
                     }
                 });
@@ -137,7 +200,7 @@ public class ProductActivity extends AppCompatActivity {
                 yAxis.setDrawZeroLine(false);
                 yAxis.setDrawLimitLinesBehindData(true);
                 setData(20, 50, sets);
-                publishProgress(SET_RIGHT_AXIS);
+                //publishProgress(SET_RIGHT_AXIS);
                 publishProgress(GET_CHART_DATA);
                 while(sets == null);
                 //mChart.animateX(1500);
@@ -246,4 +309,128 @@ public class ProductActivity extends AppCompatActivity {
                 });
             }
         }
+
+    private void shareLinkURL(String title, String url) {
+        Intent share = new Intent(android.content.Intent.ACTION_SEND);
+        share.setType("text/plain");
+        share.addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET);
+        share.putExtra(Intent.EXTRA_SUBJECT, title);
+        share.putExtra(Intent.EXTRA_TEXT, url);
+        startActivity(Intent.createChooser(share, "Share link!"));
+    }
+
+    private void openURL(String url)
+    {
+        if (!url.startsWith("http://") && !url.startsWith("https://"))
+            url = "http://" + url;
+        Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+        startActivity(browserIntent);
+    }
+
+    private void addProductToCart(String cartID, String ASIN, String HMAC)
+    {
+        String listAddress = getSharedPreferences("AMAZON_ADVISOR", Activity.MODE_PRIVATE).getString("listAddress", "");
+        String temp = listAddress.substring(listAddress.indexOf("wishlist/"));
+        temp = temp.replace("wishlist/", "");
+        String listID = temp.substring(0, temp.indexOf("/"));
+        System.out.println(listID);
+        Map<String, String> params = new HashMap<String, String>();
+        params.put("Service", "AWSECommerceService");
+        params.put("AssociateTag", "amazonadvis06-20");
+        params.put("Version", "2009-03-31");
+        params.put("CartId", cartID);
+        params.put("HMAC", HMAC);
+        params.put("Operation", "CartAdd");
+        params.put("Item.1.ASIN", ASIN);
+        params.put("Item.1.ListItemId", listID);
+        params.put("Item.1.Quantity", "1");
+        SignedRequestsHelper helper;
+        try
+        {
+            helper = SignedRequestsHelper.getInstance(AmazonLocaleUtils.getLocalizedAWSURL(), AWS_ACCESS_KEY_ID, AWS_SECRET_KEY);
+            String requestUrl = helper.sign(params);
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+    }
+
+    private String createCartURL(String ASIN)
+    {
+        String listAddress = getSharedPreferences("AMAZON_ADVISOR", Activity.MODE_PRIVATE).getString("listAddress", "");
+        String temp = listAddress.substring(listAddress.indexOf("wishlist/"));
+        temp = temp.replace("wishlist/", "");
+        String listID = temp.substring(0, temp.indexOf("/"));
+        Map<String, String> params = new HashMap<String, String>();
+        params.put("Service", "AWSECommerceService");
+        params.put("AssociateTag", "amazonadvis06-20");
+        params.put("Version", "2009-03-31");
+        params.put("Operation", "CartCreate");
+        params.put("Item.1.ASIN", ASIN);
+        params.put("Item.1.ListItemId", listID);
+        params.put("Item.1.Quantity", "1");
+        SignedRequestsHelper helper;
+        try
+        {
+            helper = SignedRequestsHelper.getInstance(AmazonLocaleUtils.getLocalizedAWSURL(), AWS_ACCESS_KEY_ID, AWS_SECRET_KEY);
+            return helper.sign(params);
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private String[] getCartDetails(String requestUrl)
+    {
+        try
+        {
+            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+            DocumentBuilder db = dbf.newDocumentBuilder();
+            Document doc = null;
+            int done = 0;
+            while(done == 0)
+                try
+                {
+                    doc = db.parse(requestUrl);
+                    done = 1;
+                }
+                catch (FileNotFoundException exc)
+                {
+                    exc.printStackTrace();
+                }
+            String[] container = new String[2];
+            System.out.println(requestUrl);
+            Node cartID = doc.getElementsByTagName("CartId").item(0);
+            Node HMAC = doc.getElementsByTagName("HMAC").item(0);
+            NodeList response = doc.getElementsByTagName("Request");
+            if(response.item(0).getChildNodes().item(0).getTextContent().equals("True")) {
+                container[0] = cartID.getTextContent();
+                container[1] = HMAC.getTextContent();
+                getSharedPreferences("AMAZON_ADVISOR", MODE_PRIVATE).edit().putString("CART_ID", container[0]).apply();
+                getSharedPreferences("AMAZON_ADVISOR", MODE_PRIVATE).edit().putString("HMAC", container[1]).apply();
+                return container;
+            }
+            else
+                return null;
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private void uploadCartContent(String cartID, String HMAC, String associateID)
+    {
+        StringBuilder url_string = new StringBuilder();
+        url_string.append("https://"+AmazonLocaleUtils.getLocalizedURL()+"/gp/cart/aws-merge.html?");
+        url_string.append("cart-id="+cartID+"&");
+        url_string.append("hmac="+HMAC+"&");
+        url_string.append("associate-id="+associateID+"&");
+        url_string.append("AWSAccessKeyId="+AWS_ACCESS_KEY_ID);
+        openURL(url_string.toString());
+    }
 }

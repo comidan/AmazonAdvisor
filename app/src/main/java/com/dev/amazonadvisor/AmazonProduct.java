@@ -9,7 +9,7 @@ import com.orm.SugarRecord;
 public class AmazonProduct extends SugarRecord
 {
 
-    String title, description, price, productId, seller, availability, priceDrop, rating;
+    String title, description, price, productId, seller, availability, priceDrop, rating, warranty, url;
     byte[] image;
     boolean prime;
 
@@ -32,7 +32,7 @@ public class AmazonProduct extends SugarRecord
         this.rating = rating;
     }
 
-    public AmazonProduct(String productId, String title, String price, String seller, String availability, String priceDrop, boolean prime, byte[] image, String rating)
+    public AmazonProduct(String productId, String title, String price, String seller, String availability, String priceDrop, boolean prime, byte[] image, String rating, String warranty, String url)
     {
         this.productId = productId;
         this.title = title;
@@ -43,6 +43,8 @@ public class AmazonProduct extends SugarRecord
         this.prime = prime;
         this.image = image;
         this.rating = rating;
+        this.warranty =  warranty;
+        this.url = url;
         description = "";
     }
 }

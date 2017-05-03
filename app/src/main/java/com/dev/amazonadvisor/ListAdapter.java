@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Build;
-import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -67,11 +66,15 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.ViewHolder> {
                 intent.putExtra("Prime", dataset.get(position).prime);
                 intent.putExtra("Seller", dataset.get(position).seller);
                 intent.putExtra("Rating", dataset.get(position).rating);
+                intent.putExtra("Warranty", dataset.get(position).warranty);
+                intent.putExtra("ASIN", dataset.get(position).productId);
+                intent.putExtra("URL", dataset.get(position).url);
                 Bitmap bitmap = ImageUtils.convertByteArrayToBitmap(dataset.get(position).image);
                 ByteArrayOutputStream stream = new ByteArrayOutputStream();
                 bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
                 intent.putExtra("ImageByte", stream.toByteArray());
-                if(Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP) {
+                if(Build.VERSION.SDK_INT >=
+                        Build.VERSION_CODES.LOLLIPOP) {
                     ActivityOptions transitionActivityOptions = ActivityOptions.makeSceneTransitionAnimation(activity,
                             sharedView,
                             transitionName);

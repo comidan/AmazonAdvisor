@@ -1,14 +1,14 @@
 <android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:fab="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/main_constraint_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
     <com.github.clans.fab.FloatingActionMenu
-        android:id="@+id/menu_yellow"
+        android:id="@+id/product_menu"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-
         android:layout_marginBottom="10dp"
         android:layout_marginEnd="10dp"
         android:elevation="4dp"
@@ -24,6 +24,7 @@
         fab:menu_shadowColor="#444">
 
         <com.github.clans.fab.FloatingActionButton
+            android:id="@+id/add_to_cart"
             style="@style/MenuButtonsStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -31,6 +32,7 @@
             fab:fab_label="Add to cart" />
 
         <com.github.clans.fab.FloatingActionButton
+            android:id="@+id/open_link"
             style="@style/MenuButtonsStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -38,6 +40,7 @@
             fab:fab_label="Open store" />
 
         <com.github.clans.fab.FloatingActionButton
+            android:id="@+id/share_link"
             style="@style/MenuButtonsStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -45,6 +48,7 @@
             fab:fab_label="Share" />
 
         <com.github.clans.fab.FloatingActionButton
+
             style="@style/MenuButtonsStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -459,6 +463,36 @@
                         card_view:layout_constraintTop_toBottomOf="@+id/textView14" />
 
                     <TextView
+                        android:id="@+id/warranty"
+                        android:layout_width="200dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="8dp"
+                        android:layout_marginLeft="8dp"
+                        android:layout_marginRight="8dp"
+                        android:layout_marginStart="8dp"
+                        android:layout_marginTop="8dp"
+                        android:textAlignment="textEnd"
+                        android:textStyle="bold"
+                        card_view:layout_constraintHorizontal_bias="1.0"
+                        card_view:layout_constraintLeft_toRightOf="@+id/textView16"
+                        card_view:layout_constraintRight_toRightOf="parent"
+                        card_view:layout_constraintTop_toBottomOf="@+id/rating" />
+
+                    <TextView
+                        android:id="@+id/textView16"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="8dp"
+                        android:layout_marginLeft="8dp"
+                        android:layout_marginRight="8dp"
+                        android:layout_marginStart="8dp"
+                        android:layout_marginTop="8dp"
+                        android:text="@string/warranty"
+                        card_view:layout_constraintLeft_toLeftOf="parent"
+                        card_view:layout_constraintRight_toLeftOf="@+id/warranty"
+                        card_view:layout_constraintTop_toBottomOf="@+id/textView15" />
+
+                    <TextView
                         android:id="@+id/textView3"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
@@ -472,7 +506,7 @@
                         android:textStyle="bold"
                         card_view:layout_constraintLeft_toLeftOf="parent"
                         card_view:layout_constraintRight_toRightOf="parent"
-                        card_view:layout_constraintTop_toBottomOf="@+id/textView15"
+                        card_view:layout_constraintTop_toBottomOf="@+id/textView16"
                         android:layout_marginStart="8dp"
                         android:layout_marginEnd="8dp" />
 
@@ -573,7 +607,6 @@
     <android.support.constraint.Guideline
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/guideline"
         app:layout_constraintGuide_begin="20dp"
         android:orientation="vertical" />
 

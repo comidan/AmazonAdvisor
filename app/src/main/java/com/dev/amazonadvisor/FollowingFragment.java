@@ -4,6 +4,7 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
+import android.app.Activity;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -43,7 +44,6 @@ import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.Locale;
 import java.util.Map;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -110,6 +110,7 @@ public class FollowingFragment extends Fragment {
         );
         menuFab.setClosedOnTouchOutside(true);
         menuFab.hideMenuButton(false);
+        AmazonLocaleUtils.setLocale(getActivity());
         initiateAmazonService(false);
     }
 
@@ -200,13 +201,10 @@ public class FollowingFragment extends Fragment {
         new FetchProductsData().execute(forced);
     }
 
-    private class FetchProductsData extends AsyncTask<Boolean, Void, ArrayList<AmazonProduct>>
+    private class FetchProductsData extends AsyncTask<Boolean, Void, ArrayList<AmazonProduct>> implements AmazonAWSDetails
     {
 
-        private static final String AWS_ACCESS_KEY_ID = "AKIAIIZGFFBWXZXJSQNA";
-        private static final String AWS_SECRET_KEY = "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";
-
-        private final String ENDPOINT = getLocalizedAWSURL();
+        private final String ENDPOINT = AmazonLocaleUtils.getLocalizedAWSURL();
 
         private URL url;
         private HttpURLConnection conn;
@@ -227,7 +225,7 @@ public class FollowingFragment extends Fragment {
                 AmazonProduct.deleteAll(AmazonProduct.class);
             try
             {
-                url = new URL("https://" + getLocalizedURL() + "/gp/registry/search");
+                url = new URL("https://" + AmazonLocaleUtils.getLocalizedURL() + "/gp/registry/search");
                 Map<String,Object> params = new LinkedHashMap<>();
                 params.put("sortby", "");
                 params.put("index", "it-xml-wishlist");
@@ -258,10 +256,12 @@ public class FollowingFragment extends Fragment {
                 String line;
                 while((line = reader.readLine()) != null)
                     result.append(line);
+                System.out.println(result);
                 String finalResult = result.substring(result.indexOf("Advisor"), result.substring(result.indexOf("Advisor"))
                         .indexOf("<") + result.indexOf("Advisor"));
                 String listAddress = finalResult.substring(finalResult.indexOf("href=\"")).replace("href=\"", "")
                         .replace("\">", "");
+                getActivity().getSharedPreferences("AMAZON_ADVISOR", Activity.MODE_PRIVATE).edit().putString("listAddress", listAddress).apply();
                 System.out.println(listAddress + "\n\n\n");
                 reader.close();
 
@@ -333,12 +333,21 @@ public class FollowingFragment extends Fragment {
                 AmazonProductContainer currentProduct = fetchProductData(requestUrl);
                 AmazonProduct product = new AmazonProduct(productIDs.get(i), currentProduct.title, currentProduct.price,currentProduct.seller,
                                                           currentProduct.availability, "", currentProduct.prime,
-                                                          ImageUtils.getByteArrayFromURL(currentProduct.mediumImagesURL), currentProduct.rating);
+                                                          ImageUtils.getByteArrayFromURL(currentProduct.mediumImagesURL), currentProduct.rating,
+                                                          currentProduct.warranty, currentProduct.url);
                 product.save();
                 products.add(product);
+                adapter = new ListAdapter(products, getActivity());
+                publishProgress();
             }
             adapter = new ListAdapter(products, getActivity());
             return products;
+        }
+
+        @Override
+        protected void onProgressUpdate(Void... values) {
+            super.onProgressUpdate(values);
+            recyclerView.setAdapter(adapter);
         }
 
         @Override
@@ -350,7 +359,7 @@ public class FollowingFragment extends Fragment {
 
         private void initConnection(String listAddress) throws IOException
         {
-            url = new URL("https://" + getLocalizedURL() + listAddress);
+            url = new URL("https://" + AmazonLocaleUtils.getLocalizedURL() + listAddress);
             conn = (HttpURLConnection)url.openConnection();
             reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
         }
@@ -385,6 +394,8 @@ public class FollowingFragment extends Fragment {
                 Node itemsAsUsed = doc.getElementsByTagName("TotalUsed").item(0);
                 Node hasPrime = doc.getElementsByTagName("IsEligibleForPrime").item(0);
                 Node availability = doc.getElementsByTagName("Availability").item(0);
+                Node warranty = doc.getElementsByTagName("Warranty").item(0);
+                Node url = doc.getElementsByTagName("DetailPageURL").item(0);
                 NodeList features = doc.getElementsByTagName("Feature");
                 NodeList itemDimension = doc.getElementsByTagName("ItemDimensions");
                 container.title = title.getTextContent();
@@ -398,6 +409,8 @@ public class FollowingFragment extends Fragment {
                 container.itemsAsNew = Integer.parseInt(itemsAsNew.getTextContent());
                 container.itemAsUsed = Integer.parseInt(itemsAsUsed.getTextContent());
                 container.prime = hasPrime.getTextContent().equals("1");
+                container.warranty = warranty.getTextContent();
+                container.url = url.getTextContent();
                 container.availability = availability != null ? availability.getTextContent() : "";
                 for(int i = 0; i < features.getLength(); i++)
                     container.features.add(features.item(i).getTextContent());
@@ -412,7 +425,7 @@ public class FollowingFragment extends Fragment {
 
         private String getRatingFromASIN(String ASIN) throws IOException
         {
-            url = new URL("https://" + getLocalizedURL() + "/gp/customer-reviews/widgets/average-customer-review/popover/ref=dpx_acr_pop_?contextId=dpx&asin=" + ASIN);
+            url = new URL("https://" + AmazonLocaleUtils.getLocalizedURL() + "/gp/customer-reviews/widgets/average-customer-review/popover/ref=dpx_acr_pop_?contextId=dpx&asin=" + ASIN);
             conn = (HttpURLConnection)url.openConnection();
             reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
             StringBuilder result = new StringBuilder();
@@ -422,53 +435,6 @@ public class FollowingFragment extends Fragment {
             org.jsoup.nodes.Document doc = Jsoup.parseBodyFragment(result.toString());
             Element body = doc.body();
             return body.getElementsByClass("a-size-base a-color-secondary").html();
-        }
-
-        private Locale getLocale()
-        {
-            return getActivity().getResources().getConfiguration().locale;
-        }
-
-        private String getLocalizedAWSURL()
-        {
-            Locale locale = getLocale();
-
-            if(locale.equals(Locale.ITALY))
-                return "webservices.amazon.it";
-            if(locale.equals(Locale.US))
-                return "ecs.amazonaws.com";
-            if(locale.equals(Locale.CANADA))
-                return "ecs.amazonaws.ca";
-            if(locale.equals(Locale.UK))
-                return "ecs.amazonaws.co.uk";
-            if(locale.equals(Locale.FRANCE))
-                return "ecs.amazonaws.fr";
-            if(locale.equals(Locale.GERMANY))
-                return "ecs.amazonaws.de";
-            if(locale.equals(Locale.JAPAN))
-                return "ecs.amazonaws.jp";
-            return "ecs.amazonaws.com";
-        }
-
-        private String getLocalizedURL()
-        {
-            Locale locale = getLocale();
-
-            if(locale.equals(Locale.ITALY))
-                return "www.amazon.it";
-            if(locale.equals(Locale.US))
-                return "www.amazon.com";
-            if(locale.equals(Locale.CANADA))
-                return "www.amazon.ca";
-            if(locale.equals(Locale.UK))
-                return "www.amazon.co.uk";
-            if(locale.equals(Locale.FRANCE))
-                return "www.amazon.fr";
-            if(locale.equals(Locale.GERMANY))
-                return "www.amazon.de";
-            if(locale.equals(Locale.JAPAN))
-                return "www.amazon.jp";
-            return "www.amazon.com";
         }
     }
 }
