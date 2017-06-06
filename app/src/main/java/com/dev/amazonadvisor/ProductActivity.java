@@ -347,7 +347,7 @@ public class ProductActivity extends AppCompatActivity implements AmazonAWSDetai
         SignedRequestsHelper helper;
         try
         {
-            helper = SignedRequestsHelper.getInstance(AmazonLocaleUtils.getLocalizedAWSURL(), AWS_ACCESS_KEY_ID, AWS_SECRET_KEY);
+            helper = new SignedRequestsHelper(AmazonLocaleUtils.getLocalizedAWSURL());
             String requestUrl = helper.sign(params);
         }
         catch (Exception e)
@@ -373,7 +373,7 @@ public class ProductActivity extends AppCompatActivity implements AmazonAWSDetai
         SignedRequestsHelper helper;
         try
         {
-            helper = SignedRequestsHelper.getInstance(AmazonLocaleUtils.getLocalizedAWSURL(), AWS_ACCESS_KEY_ID, AWS_SECRET_KEY);
+            helper = new SignedRequestsHelper(AmazonLocaleUtils.getLocalizedAWSURL());
             return helper.sign(params);
         }
         catch (Exception e)

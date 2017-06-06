@@ -15,6 +15,7 @@ import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.helper.ItemTouchHelper;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -282,16 +283,16 @@ public class FollowingFragment extends Fragment {
                     result.append(line);
                 org.jsoup.nodes.Document doc = Jsoup.parseBodyFragment(result.toString());
                 body = doc.body();
-                Elements elements = body.getElementsByClass("a-spacing-large a-divider-normal");
-                for(int i = 0; i < elements.size(); i++)
+                Elements found = body.getElementsByClass("a-text-center a-fixed-left-grid-col g-itemImage a-col-left");
+                System.out.println(found.size());
+                for(int i = 0; i < found.size(); i++)
                 {
-                    result = new StringBuilder(result.substring(result.indexOf("<div id=\"item_")));
-                    String temp = result.toString();
-                    temp = temp.substring(temp.indexOf("asin="));
-                    temp = temp.substring(0, temp.indexOf("&"));
-                    temp = temp.substring(5);
+                    Elements links = found.get(i).getElementsByClass("a-link-normal a-declarative");
+                    String href = links.get(0).attr("href").toString();
+                    href = href.replace("/dp/", "");
+                    String temp = href.substring(0, href.indexOf("/"));
+                    Log.v("ASIN", temp);
                     productIDs.add(temp);
-                    result = new StringBuilder(result.substring(16, result.length()));
                 }
             }
             catch(MalformedURLException exc)
@@ -313,7 +314,7 @@ public class FollowingFragment extends Fragment {
 
                 SignedRequestsHelper helper;
                 try {
-                    helper = SignedRequestsHelper.getInstance(ENDPOINT, AWS_ACCESS_KEY_ID, AWS_SECRET_KEY);
+                    helper = new SignedRequestsHelper(ENDPOINT);
                 } catch (Exception e) {
                     e.printStackTrace();
                     continue;
@@ -402,20 +403,30 @@ public class FollowingFragment extends Fragment {
                 container.smallImagesURL = smallImageURL.getTextContent();
                 container.mediumImagesURL = mediumImageURL.getTextContent();
                 container.largeImageURL = largeImageURL.getTextContent();
-                container.manufacturer = manufacturer.getTextContent();
-                container.seller = seller.getTextContent();
-                container.model = model.getTextContent();
-                container.price = price.getTextContent();
-                container.itemsAsNew = Integer.parseInt(itemsAsNew.getTextContent());
-                container.itemAsUsed = Integer.parseInt(itemsAsUsed.getTextContent());
-                container.prime = hasPrime.getTextContent().equals("1");
-                container.warranty = warranty.getTextContent();
-                container.url = url.getTextContent();
+                if(manufacturer != null)
+                    container.manufacturer = manufacturer.getTextContent();
+                if(seller != null)
+                    container.seller = seller.getTextContent();
+                if(model != null)
+                    container.model = model.getTextContent();
+                if(price != null)
+                    container.price = price.getTextContent();
+                if(itemsAsNew != null)
+                    container.itemsAsNew = Integer.parseInt(itemsAsNew.getTextContent());
+                if(itemsAsUsed != null)
+                    container.itemAsUsed = Integer.parseInt(itemsAsUsed.getTextContent());
+                if(hasPrime != null)
+                    container.prime = hasPrime.getTextContent().equals("1");
+                if(warranty != null)
+                    container.warranty = warranty.getTextContent();
+                if(url != null)
+                    container.url = url.getTextContent();
                 container.availability = availability != null ? availability.getTextContent() : "";
                 for(int i = 0; i < features.getLength(); i++)
                     container.features.add(features.item(i).getTextContent());
-                for(int i = 0; i < itemDimension.item(0).getChildNodes().getLength(); i++)
-                    container.itemDimension.add(Integer.parseInt(itemDimension.item(0).getChildNodes().item(i).getTextContent()));
+                if(itemDimension.item(0) != null) //checking if dimensions data is present
+                    for(int i = 0; i < itemDimension.item(0).getChildNodes().getLength(); i++)
+                        container.itemDimension.add(Integer.parseInt(itemDimension.item(0).getChildNodes().item(i).getTextContent()));
                 container.rating = getRatingFromASIN(doc.getElementsByTagName("Item").item(0).getFirstChild().getTextContent());
             } catch (Exception e) {
                 throw new RuntimeException(e);
