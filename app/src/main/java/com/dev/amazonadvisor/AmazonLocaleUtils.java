@@ -67,4 +67,11 @@ public class AmazonLocaleUtils {
             return "www.amazon.jp";
         return "www.amazon.com";
     }
+
+    static String getLocalizedCode()
+    {
+        if(locale == null)
+            locale = getLocale(activity);
+        return locale.getLanguage();
+    }
 }

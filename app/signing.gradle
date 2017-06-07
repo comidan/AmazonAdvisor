@@ -2,7 +2,7 @@ android {
 
     signingConfigs {
         releaseConfig {
-            storeFile file("D:\\Users\\Daniele\\Documents\\KeyStore")
+            storeFile file("C:\\Users\\Valerio\\Documents\\KeyStore")
             storePassword 'daniele96'
             keyAlias "daniele"
             keyPassword 'daniele96'

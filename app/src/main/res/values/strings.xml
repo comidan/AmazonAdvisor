@@ -16,7 +16,7 @@
     <string name="average_price">Price average</string>
     <string name="target_price">Price target</string>
     <string name="product_details">Product details</string>
-    <string name="date_delivery">Estimated delivery</string>
+    <string name="date_delivery">Availability</string>
     <string name="prime">Prime</string>
     <string name="seller">Seller</string>
     <string name="login_button_content_description">"Button for authorization through Login with Amazon"</string>
