@@ -413,6 +413,8 @@ public class FollowingFragment extends Fragment {
                     }
                     catch (FileNotFoundException exc)
                     {
+                        System.out.println("Waiting for 1.5 seconds");
+                        Thread.sleep(1500);
                         exc.printStackTrace();
                     }
                 Node title = doc.getElementsByTagName("Title").item(0);
