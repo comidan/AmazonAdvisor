@@ -37,6 +37,7 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -258,12 +259,25 @@ public class FollowingFragment extends Fragment {
                 while((line = reader.readLine()) != null)
                     result.append(line);
                 System.out.println(result);
-                String finalResult = result.substring(result.indexOf("Advisor"), result.substring(result.indexOf("Advisor"))
-                        .indexOf("<") + result.indexOf("Advisor"));
-                String listAddress = finalResult.substring(finalResult.indexOf("href=\"")).replace("href=\"", "")
-                        .replace("\">", "");
-                getActivity().getSharedPreferences("AMAZON_ADVISOR", Activity.MODE_PRIVATE).edit().putString("listAddress", listAddress).apply();
-                System.out.println(listAddress + "\n\n\n");
+
+                org.jsoup.nodes.Document doc = Jsoup.parseBodyFragment(result.toString());
+                Element body = doc.body();
+                Elements found = body.getElementsByClass("a-box-inner a-padding-small");
+                if(found.size() == 0)
+                    found = body.getElementsByClass("a-expander-content a-expander-section-content a-section-expander-inner");
+                String listAddress = "";
+                for(int i = 0; i < found.size(); i++)
+                {
+                    Elements links = found.get(i).getElementsByClass("a-link-normal a-declarative");
+                    String title = links.get(0).attr("title").toString();
+                    System.out.println(title);
+                    if(title.contains("Advisor"))
+                    {
+                        listAddress = links.get(0).attr("href").toString();
+                        break;
+                    }
+                }
+                System.out.println("ListAddress :" + listAddress + "\n\n\n");
                 reader.close();
 
 
@@ -281,18 +295,25 @@ public class FollowingFragment extends Fragment {
                 result = new StringBuilder();
                 while((line = reader.readLine()) != null)
                     result.append(line);
-                org.jsoup.nodes.Document doc = Jsoup.parseBodyFragment(result.toString());
+                writeToFile(result.toString(), getContext());
+                doc = Jsoup.parseBodyFragment(result.toString());
                 body = doc.body();
-                Elements found = body.getElementsByClass("a-text-center a-fixed-left-grid-col g-itemImage a-col-left");
+                found = body.getElementsByClass("a-text-center a-fixed-left-grid-col g-itemImage a-col-left");
                 System.out.println(found.size());
                 for(int i = 0; i < found.size(); i++)
                 {
                     Elements links = found.get(i).getElementsByClass("a-link-normal a-declarative");
-                    String href = links.get(0).attr("href").toString();
-                    href = href.replace("/dp/", "");
-                    String temp = href.substring(0, href.indexOf("/"));
-                    Log.v("ASIN", temp);
-                    productIDs.add(temp);
+                    try {
+                        String href = links.get(0).attr("href").toString();
+                        href = href.replace("/dp/", "");
+                        String temp = href.substring(0, href.indexOf("/"));
+                        Log.v("ASIN", temp);
+                        productIDs.add(temp);
+                    }
+                    catch (Exception exc) //general excpetion for product code not found, e.g. product removed by vendor from amazon
+                    {
+                        exc.printStackTrace();
+                    }
                 }
             }
             catch(MalformedURLException exc)
@@ -343,6 +364,17 @@ public class FollowingFragment extends Fragment {
             }
             adapter = new ListAdapter(products, getActivity());
             return products;
+        }
+
+        private void writeToFile(String data,Context context) {
+            try {
+                OutputStreamWriter outputStreamWriter = new OutputStreamWriter(context.openFileOutput("HTML", Context.MODE_PRIVATE));
+                outputStreamWriter.write(data);
+                outputStreamWriter.close();
+            }
+            catch (IOException exc) {
+                exc.printStackTrace();
+            }
         }
 
         @Override
