@@ -68,7 +68,6 @@ public class ProductActivity extends AppCompatActivity implements AmazonAWSDetai
         initData();
         listAdapter = new ExpandableList(this, listDataHeader, listHash);
         listView.setAdapter(listAdapter);*/
-
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         toolbar.setTitle(R.string.app_name);
         setSupportActionBar(toolbar);
