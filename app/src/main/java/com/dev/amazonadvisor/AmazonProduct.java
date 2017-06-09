@@ -1,12 +1,10 @@
 package com.dev.amazonadvisor;
 
-import com.orm.SugarRecord;
-
 /**
  * Created by daniele on 28/03/2017.
  */
 
-public class AmazonProduct extends SugarRecord
+public class AmazonProduct
 {
 
     String title, description, price, productId, seller, availability, priceDrop, rating, warranty, url;

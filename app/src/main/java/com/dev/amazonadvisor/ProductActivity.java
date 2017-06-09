@@ -155,7 +155,7 @@ public class ProductActivity extends AppCompatActivity implements AmazonAWSDetai
 
                 String languageDomainCode = AmazonLocaleUtils.getLocalizedCode();
                 return ImageUtils.getBitmapFromURL("https://dyn.keepa.com/pricehistory.png?domain=" + languageDomainCode + "&asin=" +
-                                                    getIntent().getStringExtra("ASIN") + "&width=800&height=250&amazon=1&new=0&used=0&salesrank=0&range=100");
+                                                    getIntent().getStringExtra("ASIN") + "&width=1000&height=500&amazon=1&new=0&used=0&salesrank=0&range=100");
             }
 
             @Override
