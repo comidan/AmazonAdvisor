@@ -53,6 +53,9 @@ import javax.xml.parsers.DocumentBuilderFactory;
 
 public class FollowingFragment extends Fragment {
 
+    private static DatabaseHandler databaseHandler;
+    private static ArrayList<AmazonProduct> products;
+
     private FloatingActionMenu menuFab;
     private Handler uiHandler;
     private RecyclerView recyclerView;
@@ -75,6 +78,9 @@ public class FollowingFragment extends Fragment {
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        if(products == null)
+            products = new ArrayList<>();
+        databaseHandler = new DatabaseHandler(getContext());
         recyclerView.setHasFixedSize(true);
         layoutManager = new LinearLayoutManager(getContext());
         recyclerView.setLayoutManager(layoutManager);
@@ -114,6 +120,7 @@ public class FollowingFragment extends Fragment {
         menuFab.hideMenuButton(false);
         AmazonLocaleUtils.setLocale(getActivity());
         initiateAmazonService(false);
+        Log.v("Test", "Test");
     }
 
     @Override
@@ -217,14 +224,15 @@ public class FollowingFragment extends Fragment {
         @Override
         protected ArrayList<AmazonProduct> doInBackground(Boolean... values) {
 
-            ArrayList<AmazonProduct> products = new ArrayList<>(AmazonProduct.listAll(AmazonProduct.class, "title"));
+            if(products == null || products.isEmpty())
+                products = new ArrayList<>(databaseHandler.getAllProducts());
             if(!values[0] && products.size() > 0)
             {
                 adapter = new ListAdapter(products, getActivity());
                 return products;
             }
             else if(values[0])
-                AmazonProduct.deleteAll(AmazonProduct.class);
+                databaseHandler.erase();
             try
             {
                 url = new URL("https://" + AmazonLocaleUtils.getLocalizedURL() + "/gp/registry/search");
@@ -357,7 +365,7 @@ public class FollowingFragment extends Fragment {
                                                           currentProduct.availability, "", currentProduct.prime,
                                                           ImageUtils.getByteArrayFromURL(currentProduct.mediumImagesURL), currentProduct.rating,
                                                           currentProduct.warranty, currentProduct.url);
-                product.save();
+                databaseHandler.addProduct(product);
                 products.add(product);
                 adapter = new ListAdapter(products, getActivity());
                 publishProgress();
@@ -413,6 +421,8 @@ public class FollowingFragment extends Fragment {
                     }
                     catch (FileNotFoundException exc)
                     {
+                        System.out.println("Waiting for 1.5 seconds");
+                        Thread.sleep(1500);
                         exc.printStackTrace();
                     }
                 Node title = doc.getElementsByTagName("Title").item(0);
