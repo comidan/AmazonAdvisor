@@ -2,6 +2,7 @@ package com.dev.amazonadvisor;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
@@ -16,6 +17,8 @@ import android.support.design.widget.Snackbar;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -43,24 +46,17 @@ import javax.xml.parsers.DocumentBuilderFactory;
 
 public class ProductActivity extends AppCompatActivity implements AmazonAWSDetails {
     private FloatingActionMenu menuFab;
-    private ImageView chart;
     private String Srange;
     //Variables for graph slide show
     private ViewPager mPager;
     private static int currentPage = 0;
-    private static int NUM_PAGES = 0;
-    private static Integer[] IMAGES = {R.drawable.one, R.drawable.two, R.drawable.three};
-    private ArrayList<Integer> ImagesArray = new ArrayList<Integer>();
+    private static final float chartHeight = 300;
+    private static final float chartWidth = 500;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.product_activity);
-
-        /*listView = (ExpandableListView) findViewById(R.id.dropDownList);
-        initData();
-        listAdapter = new ExpandableList(this, listDataHeader, listHash);
-        listView.setAdapter(listAdapter);*/
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         toolbar.setTitle(R.string.app_name);
@@ -135,9 +131,24 @@ public class ProductActivity extends AppCompatActivity implements AmazonAWSDetai
                                 openURL(getIntent().getStringExtra("URL"));
                             }
                         });
+
                         new LoadPriceChart().execute();
+                        setHeightViewPager();
                     }
                 });
+    }
+
+    void setHeightViewPager() {
+        DisplayMetrics metrics = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(metrics);
+        float logicalDensity = metrics.density;
+        float width = metrics.widthPixels;
+        float widthDp = (int) Math.ceil(width/logicalDensity);
+        widthDp -= 32;
+        float chartRatio = chartHeight/chartWidth;
+        float dp = widthDp*chartRatio;
+        mPager = (ViewPager) findViewById(R.id.slider);
+        mPager.getLayoutParams().height = Math.round(dp*logicalDensity);
     }
 
     private class LoadPriceChart extends AsyncTask<Void, Integer, ArrayList<Bitmap>> {
@@ -154,7 +165,7 @@ public class ProductActivity extends AppCompatActivity implements AmazonAWSDetai
             for (int i : days) {
                 Srange = String.valueOf(i);
                 imageG.add(ImageUtils.getBitmapFromURL("https://dyn.keepa.com/pricehistory.png?domain=" + languageDomainCode + "&asin=" +
-                        getIntent().getStringExtra("ASIN") + "&width=1000&height=500&amazon=1&new=0&used=0&salesrank=0&range=" + Srange));
+                        getIntent().getStringExtra("ASIN") + "&width=500&height=300&amazon=1&new=1&used=0&salesrank=0&range=" + Srange));
             }
             return imageG;
         }
