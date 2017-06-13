@@ -25,8 +25,8 @@ public class AmazonProduct
         this.price = price;
         this.seller = seller;
         this.availability = availability;
-        this.priceDrop = priceDrop;
         this.prime = prime;
+        this.priceDrop = priceDrop;
         this.image = image;
         this.rating = rating;
     }

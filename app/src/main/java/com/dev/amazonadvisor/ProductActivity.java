@@ -2,9 +2,11 @@ package com.dev.amazonadvisor;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -15,6 +17,8 @@ import android.support.design.widget.Snackbar;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -42,23 +46,17 @@ import javax.xml.parsers.DocumentBuilderFactory;
 
 public class ProductActivity extends AppCompatActivity implements AmazonAWSDetails {
     private FloatingActionMenu menuFab;
-    private ImageView chart;
-    private String sRange;
+    private String Srange;
     //Variables for graph slide show
     private ViewPager mPager;
     private static int currentPage = 0;
-    private static int NUM_PAGES = 0;
-    private ArrayList<Integer> ImagesArray = new ArrayList<Integer>();
+    private static final float chartHeight = 300;
+    private static final float chartWidth = 500;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.product_activity);
-
-        /*listView = (ExpandableListView) findViewById(R.id.dropDownList);
-        initData();
-        listAdapter = new ExpandableList(this, listDataHeader, listHash);
-        listView.setAdapter(listAdapter);*/
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         toolbar.setTitle(R.string.app_name);
@@ -66,9 +64,9 @@ public class ProductActivity extends AppCompatActivity implements AmazonAWSDetai
         final ViewGroup tab = (ViewGroup) findViewById(R.id.tab);
 
         int range = 31; //var range defines how many days are shown in the graph
-        sRange = String.valueOf(range);
+        Srange = String.valueOf(range);
         TextView priceInterval = (TextView) findViewById(R.id.price_time);
-        priceInterval.setText("Graph shows past " + sRange + " days");
+        priceInterval.setText("Graph shows past " + Srange + " days");
 
         final View rootView = getWindow().getDecorView().getRootView();
         rootView.getViewTreeObserver().addOnGlobalLayoutListener(
@@ -87,7 +85,7 @@ public class ProductActivity extends AppCompatActivity implements AmazonAWSDetai
                         ((TextView) findViewById(R.id.delivery_date)).setText(getIntent().getStringExtra("Availability"));
                         ((TextView) findViewById(R.id.seller)).setText(getIntent().getStringExtra("Seller"));
                         ((TextView) findViewById(R.id.price_variation)).setText(getIntent().getStringExtra("PriceDrop"));
-                        ((TextView) findViewById(R.id.price_suggested_text)).setText(getIntent().getStringExtra("SuggestedPrice"));
+                        ((TextView) findViewById(R.id.price_target)).setText(getIntent().getStringExtra("SuggestedPrice"));
                         ((TextView) findViewById(R.id.price_average_text)).setText(getIntent().getStringExtra("Discount"));
                         ((TextView) findViewById(R.id.rating)).setText(getIntent().getStringExtra("Rating"));
                         ((TextView) findViewById(R.id.prime)).setText(getIntent().getBooleanExtra("Prime", false) ? getString(R.string.prime_available) :
@@ -135,9 +133,24 @@ public class ProductActivity extends AppCompatActivity implements AmazonAWSDetai
                                 openURL(getIntent().getStringExtra("URL"));
                             }
                         });
+
                         new LoadPriceChart().execute();
+                        setHeightViewPager();
                     }
                 });
+    }
+
+    void setHeightViewPager() {
+        DisplayMetrics metrics = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(metrics);
+        float logicalDensity = metrics.density;
+        float width = metrics.widthPixels;
+        float widthDp = (int) Math.ceil(width/logicalDensity);
+        widthDp -= 32;
+        float chartRatio = chartHeight/chartWidth;
+        float dp = widthDp*chartRatio;
+        mPager = (ViewPager) findViewById(R.id.slider);
+        mPager.getLayoutParams().height = Math.round(dp*logicalDensity);
     }
 
     private class LoadPriceChart extends AsyncTask<Void, Integer, ArrayList<Bitmap>> {
@@ -152,9 +165,9 @@ public class ProductActivity extends AppCompatActivity implements AmazonAWSDetai
             String languageDomainCode = AmazonLocaleUtils.getLocalizedCode();
             Integer[] days = {90, 31, 7};
             for (int i : days) {
-                sRange = String.valueOf(i);
+                Srange = String.valueOf(i);
                 imageG.add(ImageUtils.getBitmapFromURL("https://dyn.keepa.com/pricehistory.png?domain=" + languageDomainCode + "&asin=" +
-                        getIntent().getStringExtra("ASIN") + "&width=1000&height=500&amazon=1&new=0&used=0&salesrank=0&range=" + sRange));
+                        getIntent().getStringExtra("ASIN") + "&width=500&height=300&amazon=1&new=1&used=0&salesrank=0&range=" + Srange));
             }
             return imageG;
         }

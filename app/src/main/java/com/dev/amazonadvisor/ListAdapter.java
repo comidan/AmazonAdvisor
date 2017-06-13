@@ -54,9 +54,9 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.ViewHolder> {
         double priceChange = dataset.get(position).priceIncrement;
         final String priceChangeAbs = priceChange >= 0 ? "+ " + dataset.get(position).currency + " " + priceChange : "- " + dataset.get(position).currency + " " + priceChange*-1;
         if(priceChange >= 0)
-            ((ImageView)holder.layout.findViewById(R.id.trend)).setImageResource(R.drawable.pricedown);
+            ((ImageView)holder.layout.findViewById(R.id.trend)).setImageResource(R.drawable.price_down);
         else
-            ((ImageView)holder.layout.findViewById(R.id.trend)).setImageResource(R.drawable.priceup);
+            ((ImageView)holder.layout.findViewById(R.id.trend)).setImageResource(R.drawable.price_up);
         ((TextView)holder.layout.findViewById(R.id.discount)).setText(priceChangeAbs + " " + discountInPercent);
         holder.layout.findViewById(R.id.card_view).setOnClickListener(new View.OnClickListener() {
 

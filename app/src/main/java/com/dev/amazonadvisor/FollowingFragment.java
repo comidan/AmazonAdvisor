@@ -479,7 +479,8 @@ public class FollowingFragment extends Fragment {
                     container.model = model.getTextContent();
                 if(price != null)
                     container.price = price.getTextContent();
-                if(suggestedPrice != null) {
+                if(suggestedPrice != null)
+                {
                     AmazonProduct temp;
                     if((temp = searchByASIN(productsBackup, requestData[1])) != null)
                         container.priceIncrement = Double.parseDouble(temp.price.replace(".", "").replace(",",".").replaceAll("[^\\d.]", "")) -
