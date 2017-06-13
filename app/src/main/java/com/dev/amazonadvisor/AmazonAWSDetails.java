@@ -6,6 +6,6 @@ package com.dev.amazonadvisor;
 
 public interface AmazonAWSDetails {
 
-    String AWS_ACCESS_KEY_ID = "NOT_EXPOSED_FOR_SECURITY";
-    String AWS_SECRET_KEY = "NOT_EXPOSED_FOR_SECURITY";
+    String AWS_ACCESS_KEY_ID = "AKIAIITWS3POHNWCEAPA";
+    String AWS_SECRET_KEY = "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";
 }

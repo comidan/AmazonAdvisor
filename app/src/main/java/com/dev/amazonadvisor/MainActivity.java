@@ -189,6 +189,8 @@ public class MainActivity extends AppCompatActivity {
                                         updateAccountHeaderOnLogout();
                                         resetDrawer();
                                         cancelAuthorizeInAppFeatures();
+                                        DatabaseHandler db = new DatabaseHandler(MainActivity.this);
+                                        db.erase();
                                         RelativeLayout mainLayout = (RelativeLayout) findViewById(R.id.main_relative_layout);
                                         Snackbar.make(mainLayout,
                                                 "Logged out successful",

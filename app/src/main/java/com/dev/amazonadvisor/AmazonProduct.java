@@ -7,9 +7,10 @@ package com.dev.amazonadvisor;
 public class AmazonProduct
 {
 
-    String title, description, price, productId, seller, availability, priceDrop, rating, warranty, url;
+    String title, description, price, productId, seller, availability, priceDrop, rating, warranty, url, currency, suggestedPrice;
     byte[] image;
     boolean prime;
+    double discount, priceIncrement;
 
     public AmazonProduct()
     {
@@ -30,7 +31,7 @@ public class AmazonProduct
         this.rating = rating;
     }
 
-    public AmazonProduct(String productId, String title, String price, String seller, String availability, String priceDrop, boolean prime, byte[] image, String rating, String warranty, String url)
+    public AmazonProduct(String productId, String title, String price, String seller, String availability, String priceDrop, boolean prime, byte[] image, String rating, String warranty, String url, String currency, double discount, double priceIncrement, String suggestedPrice)
     {
         this.productId = productId;
         this.title = title;
@@ -44,5 +45,9 @@ public class AmazonProduct
         this.warranty =  warranty;
         this.url = url;
         description = "";
+        this.currency = currency;
+        this.discount = discount;
+        this.priceIncrement = priceIncrement;
+        this.suggestedPrice = suggestedPrice;
     }
 }

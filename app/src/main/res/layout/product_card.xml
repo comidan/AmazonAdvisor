@@ -58,22 +58,22 @@
                 android:textSize="20sp"
                 card_view:layout_constraintHorizontal_bias="0.0"
                 card_view:layout_constraintLeft_toRightOf="@+id/product_image"
-                card_view:layout_constraintRight_toLeftOf="@+id/imageView"
+                card_view:layout_constraintRight_toLeftOf="@+id/trend"
                 android:layout_marginBottom="0dp"
-                card_view:layout_constraintBottom_toTopOf="@+id/textView" />
+                card_view:layout_constraintBottom_toTopOf="@+id/discount" />
 
             <ImageView
-                android:id="@+id/imageView"
+                android:id="@+id/trend"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
                 android:layout_marginBottom="0dp"
                 android:layout_marginRight="16dp"
-                card_view:layout_constraintBottom_toBottomOf="@+id/textView"
+                card_view:layout_constraintBottom_toBottomOf="@+id/discount"
                 card_view:layout_constraintRight_toRightOf="parent"
                 card_view:srcCompat="@drawable/priceup" />
 
             <TextView
-                android:id="@+id/textView"
+                android:id="@+id/discount"
                 android:layout_width="0dp"
                 android:layout_height="17dp"
                 android:layout_marginLeft="25dp"
@@ -81,7 +81,7 @@
                 android:text="EUR +1,56"
                 card_view:layout_constraintHorizontal_bias="0.0"
                 card_view:layout_constraintLeft_toRightOf="@+id/product_image"
-                card_view:layout_constraintRight_toLeftOf="@+id/imageView"
+                card_view:layout_constraintRight_toLeftOf="@+id/trend"
                 card_view:layout_constraintBottom_toBottomOf="parent"
                 android:layout_marginBottom="24dp" />
 

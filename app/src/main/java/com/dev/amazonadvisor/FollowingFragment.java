@@ -34,7 +34,9 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -63,6 +65,7 @@ public class FollowingFragment extends Fragment {
     private RecyclerView.LayoutManager layoutManager;
     private SwipeRefreshLayout swipeRefreshLayout;
     private View rootView;
+    private boolean alreadyLoaded = false;
 
     @Nullable
     @Override
@@ -76,7 +79,7 @@ public class FollowingFragment extends Fragment {
 
 
     @Override
-    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+    public void onViewCreated(View view, @Nullable final Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         if(products == null)
             products = new ArrayList<>();
@@ -112,14 +115,14 @@ public class FollowingFragment extends Fragment {
                 new SwipeRefreshLayout.OnRefreshListener() {
                     @Override
                     public void onRefresh() {
-                        initiateAmazonService(true);
+                        initiateAmazonService(true, savedInstanceState);
                     }
                 }
         );
         menuFab.setClosedOnTouchOutside(true);
         menuFab.hideMenuButton(false);
         AmazonLocaleUtils.setLocale(getActivity());
-        initiateAmazonService(false);
+        initiateAmazonService(false, savedInstanceState);
         Log.v("Test", "Test");
     }
 
@@ -204,10 +207,10 @@ public class FollowingFragment extends Fragment {
 
     }
 
-    private void initiateAmazonService(boolean forced)
+    private void initiateAmazonService(boolean forced, Bundle savedFragmentInstance)
     {
         swipeRefreshLayout.setRefreshing(true);
-        new FetchProductsData().execute(forced);
+        new FetchProductsData(savedFragmentInstance).execute(forced);
     }
 
     private class FetchProductsData extends AsyncTask<Boolean, Void, ArrayList<AmazonProduct>> implements AmazonAWSDetails
@@ -215,17 +218,26 @@ public class FollowingFragment extends Fragment {
 
         private final String ENDPOINT = AmazonLocaleUtils.getLocalizedAWSURL();
 
+        private Bundle savedFragmentIstance;
         private URL url;
         private HttpURLConnection conn;
         private BufferedReader reader;
         private ArrayList<String> productIDs = new ArrayList<>();
-        private Element body;
+        private ArrayList<AmazonProduct> productsBackup;
+
+        public FetchProductsData(Bundle savedFragmentIstance)
+        {
+            super();
+            this.savedFragmentIstance = savedFragmentIstance;
+        }
 
         @Override
         protected ArrayList<AmazonProduct> doInBackground(Boolean... values) {
 
-            if(products == null || products.isEmpty())
+            if((products == null || products.isEmpty()) && savedFragmentIstance != null && alreadyLoaded)
                 products = new ArrayList<>(databaseHandler.getAllProducts());
+            else
+                alreadyLoaded = true;
             if(!values[0] && products.size() > 0)
             {
                 adapter = new ListAdapter(products, getActivity());
@@ -233,6 +245,7 @@ public class FollowingFragment extends Fragment {
             }
             else if(values[0])
                 databaseHandler.erase();
+            productsBackup = products;
             try
             {
                 url = new URL("https://" + AmazonLocaleUtils.getLocalizedURL() + "/gp/registry/search");
@@ -360,11 +373,12 @@ public class FollowingFragment extends Fragment {
                 params.put("ResponseGroup", "Large");
                 requestUrl = helper.sign(params);
 
-                AmazonProductContainer currentProduct = fetchProductData(requestUrl);
+                AmazonProductContainer currentProduct = fetchProductData(new String[]{requestUrl, productIDs.get(i)});
                 AmazonProduct product = new AmazonProduct(productIDs.get(i), currentProduct.title, currentProduct.price,currentProduct.seller,
                                                           currentProduct.availability, "", currentProduct.prime,
                                                           ImageUtils.getByteArrayFromURL(currentProduct.mediumImagesURL), currentProduct.rating,
-                                                          currentProduct.warranty, currentProduct.url);
+                                                          currentProduct.warranty, currentProduct.url, currentProduct.currency,
+                                                          currentProduct.discount, currentProduct.priceIncrement, currentProduct.suggestedPrice);
                 databaseHandler.addProduct(product);
                 products.add(product);
                 adapter = new ListAdapter(products, getActivity());
@@ -376,13 +390,21 @@ public class FollowingFragment extends Fragment {
 
         private void writeToFile(String data,Context context) {
             try {
-                OutputStreamWriter outputStreamWriter = new OutputStreamWriter(context.openFileOutput("HTML", Context.MODE_PRIVATE));
+                /*OutputStreamWriter outputStreamWriter = new OutputStreamWriter(context.openFileOutput(context.getExternalFilesDir(null).getAbsolutePath()+"/HTML", Context.MODE_PRIVATE));
                 outputStreamWriter.write(data);
+                outputStreamWriter.close();*/
+                File file = new File(context.getExternalFilesDir(null), "HTML");
+                FileOutputStream fileOutput = new FileOutputStream(file);
+                OutputStreamWriter outputStreamWriter=new OutputStreamWriter(fileOutput);
+                outputStreamWriter.write(data);
+                outputStreamWriter.flush();
+                fileOutput.getFD().sync();
                 outputStreamWriter.close();
             }
             catch (IOException exc) {
                 exc.printStackTrace();
             }
+
         }
 
         @Override
@@ -405,7 +427,8 @@ public class FollowingFragment extends Fragment {
             reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
         }
 
-        private AmazonProductContainer fetchProductData(String requestUrl) {
+        private AmazonProductContainer fetchProductData(String[] requestData) {
+
             AmazonProductContainer container = new AmazonProductContainer();
             try
             {
@@ -413,6 +436,8 @@ public class FollowingFragment extends Fragment {
                 DocumentBuilder db = dbf.newDocumentBuilder();
                 Document doc = null;
                 int done = 0;
+                String requestUrl = requestData[0];
+                Log.v("URL_Request", requestUrl.toString());
                 while(done == 0)
                     try
                     {
@@ -432,7 +457,8 @@ public class FollowingFragment extends Fragment {
                 Node manufacturer = doc.getElementsByTagName("Manufacturer").item(0);
                 Node seller = doc.getElementsByTagName("Publisher").item(0);
                 Node model = doc.getElementsByTagName("Model").item(0);
-                Node price = doc.getElementsByTagName("ListPrice").item(0).getLastChild();
+                Node price = doc.getElementsByTagName("Price").item(0).getLastChild();
+                Node suggestedPrice = doc.getElementsByTagName("ListPrice").item(0).getLastChild();
                 Node itemsAsNew = doc.getElementsByTagName("TotalNew").item(0);
                 Node itemsAsUsed = doc.getElementsByTagName("TotalUsed").item(0);
                 Node hasPrime = doc.getElementsByTagName("IsEligibleForPrime").item(0);
@@ -453,6 +479,19 @@ public class FollowingFragment extends Fragment {
                     container.model = model.getTextContent();
                 if(price != null)
                     container.price = price.getTextContent();
+                if(suggestedPrice != null) {
+                    AmazonProduct temp;
+                    if((temp = searchByASIN(productsBackup, requestData[1])) != null)
+                        container.priceIncrement = Double.parseDouble(temp.price.replace(".", "").replace(",",".").replaceAll("[^\\d.]", "")) -
+                                                   Double.parseDouble(container.price.replace(".", "").replace(",",".").replaceAll("[^\\d.]", ""));
+                    else
+                        container.priceIncrement = 0;
+                    double mainPrice = Double.parseDouble(suggestedPrice.getTextContent().replace(".", "").replace(",",".").replaceAll("[^\\d.]", ""));
+                    double actualPrice = Double.parseDouble(container.price.replace(".", "").replace(",",".").replaceAll("[^\\d.]", ""));
+                    container.discount = 100 - actualPrice/mainPrice * 100;
+                    container.currency = suggestedPrice.getTextContent().subSequence(0, suggestedPrice.getTextContent().indexOf(" ")).toString();
+                    container.suggestedPrice =  suggestedPrice.getTextContent();
+                }
                 if(itemsAsNew != null)
                     container.itemsAsNew = Integer.parseInt(itemsAsNew.getTextContent());
                 if(itemsAsUsed != null)
@@ -473,7 +512,16 @@ public class FollowingFragment extends Fragment {
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
+            productsBackup.clear();
             return container;
+        }
+
+        private AmazonProduct searchByASIN(ArrayList<AmazonProduct> products, String ASIN)
+        {
+            for(int i = 0; i < products.size(); i++)
+                if(products.get(i).productId.equals(ASIN))
+                    return products.get(i);
+            return null;
         }
 
         private String getRatingFromASIN(String ASIN) throws IOException

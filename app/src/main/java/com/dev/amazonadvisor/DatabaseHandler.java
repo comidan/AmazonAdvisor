@@ -12,7 +12,6 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.util.Log;
 
 public class DatabaseHandler extends SQLiteOpenHelper {
 
@@ -85,7 +84,6 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         List<AmazonProduct> productList = new ArrayList<AmazonProduct>();
         String selectQuery = "SELECT  * FROM " + TABLE_PRODUCTS;
         SQLiteDatabase db = this.getWritableDatabase();
-
         Cursor cursor = db.query(TABLE_PRODUCTS, COLUMNS, "",
                                  null,
                                  null,

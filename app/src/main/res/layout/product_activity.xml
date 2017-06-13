@@ -254,7 +254,7 @@
                         card_view:layout_constraintTop_toTopOf="@+id/textView5" />
 
                     <TextView
-                        android:id="@+id/textView6"
+                        android:id="@+id/price_change"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginEnd="8dp"
@@ -282,23 +282,9 @@
                         android:textAlignment="textEnd"
                         android:textStyle="bold"
                         card_view:layout_constraintHorizontal_chainStyle="spread_inside"
-                        card_view:layout_constraintLeft_toRightOf="@+id/textView6"
+                        card_view:layout_constraintLeft_toRightOf="@+id/price_change"
                         card_view:layout_constraintRight_toRightOf="parent"
                         card_view:layout_constraintTop_toBottomOf="@+id/textView5" />
-
-                    <TextView
-                        android:id="@+id/textView7"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginEnd="8dp"
-                        android:layout_marginLeft="8dp"
-                        android:layout_marginRight="8dp"
-                        android:layout_marginStart="8dp"
-                        android:layout_marginTop="8dp"
-                        android:text="@string/average_price"
-                        card_view:layout_constraintLeft_toLeftOf="parent"
-                        card_view:layout_constraintRight_toLeftOf="@+id/price_average"
-                        card_view:layout_constraintTop_toBottomOf="@+id/textView6" />
 
                     <TextView
                         android:id="@+id/price_average"
@@ -309,14 +295,28 @@
                         android:layout_marginRight="8dp"
                         android:layout_marginStart="8dp"
                         android:layout_marginTop="8dp"
-                        android:textAlignment="textEnd"
-                        android:textStyle="bold"
-                        card_view:layout_constraintLeft_toRightOf="@+id/textView7"
-                        card_view:layout_constraintRight_toRightOf="parent"
-                        card_view:layout_constraintTop_toBottomOf="@+id/textView6" />
+                        android:text="@string/average_price"
+                        card_view:layout_constraintLeft_toLeftOf="parent"
+                        card_view:layout_constraintRight_toLeftOf="@+id/price_average_text"
+                        card_view:layout_constraintTop_toBottomOf="@+id/price_change" />
 
                     <TextView
-                        android:id="@+id/textView8"
+                        android:id="@+id/price_average_text"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="8dp"
+                        android:layout_marginLeft="8dp"
+                        android:layout_marginRight="8dp"
+                        android:layout_marginStart="8dp"
+                        android:layout_marginTop="8dp"
+                        android:textAlignment="textEnd"
+                        android:textStyle="bold"
+                        card_view:layout_constraintLeft_toRightOf="@+id/price_average"
+                        card_view:layout_constraintRight_toRightOf="parent"
+                        card_view:layout_constraintTop_toBottomOf="@+id/price_change" />
+
+                    <TextView
+                        android:id="@+id/price_suggested"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginEnd="8dp"
@@ -326,11 +326,11 @@
                         android:layout_marginTop="7dp"
                         android:text="@string/target_price"
                         card_view:layout_constraintLeft_toLeftOf="parent"
-                        card_view:layout_constraintRight_toLeftOf="@+id/price_target"
-                        card_view:layout_constraintTop_toBottomOf="@+id/textView7" />
+                        card_view:layout_constraintRight_toLeftOf="@+id/price_suggested_text"
+                        card_view:layout_constraintTop_toBottomOf="@+id/price_average_text" />
 
                     <TextView
-                        android:id="@+id/price_target"
+                        android:id="@+id/price_suggested_text"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginEnd="8dp"
@@ -340,9 +340,9 @@
                         android:layout_marginTop="7dp"
                         android:textAlignment="textEnd"
                         android:textStyle="bold"
-                        card_view:layout_constraintLeft_toRightOf="@+id/textView8"
+                        card_view:layout_constraintLeft_toRightOf="@+id/price_suggested"
                         card_view:layout_constraintRight_toRightOf="parent"
-                        card_view:layout_constraintTop_toBottomOf="@+id/textView7" />
+                        card_view:layout_constraintTop_toBottomOf="@+id/price_average_text" />
 
                     <TextView
                         android:id="@+id/textView4"
@@ -359,7 +359,7 @@
                         android:textStyle="bold"
                         card_view:layout_constraintLeft_toLeftOf="parent"
                         card_view:layout_constraintRight_toRightOf="parent"
-                        card_view:layout_constraintTop_toBottomOf="@+id/textView8" />
+                        card_view:layout_constraintTop_toBottomOf="@+id/price_suggested" />
 
                     <TextView
                         android:id="@+id/textView9"

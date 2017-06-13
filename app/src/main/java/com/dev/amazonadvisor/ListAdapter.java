@@ -50,6 +50,14 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.ViewHolder> {
         ((TextView)holder.layout.findViewById(R.id.product_title)).setText(dataset.get(position).title);
         //((TextView)holder.layout.findViewById(R.id.product_description)).setText(dataset.get(position).description);
         ((TextView)holder.layout.findViewById(R.id.product_price)).setText(dataset.get(position).price);
+        final String discountInPercent = String.format( "%.2f", dataset.get(position).discount) + " %";
+        double priceChange = dataset.get(position).priceIncrement;
+        final String priceChangeAbs = priceChange >= 0 ? "+ " + dataset.get(position).currency + " " + priceChange : "- " + dataset.get(position).currency + " " + priceChange*-1;
+        if(priceChange >= 0)
+            ((ImageView)holder.layout.findViewById(R.id.trend)).setImageResource(R.drawable.pricedown);
+        else
+            ((ImageView)holder.layout.findViewById(R.id.trend)).setImageResource(R.drawable.priceup);
+        ((TextView)holder.layout.findViewById(R.id.discount)).setText(priceChangeAbs + " " + discountInPercent);
         holder.layout.findViewById(R.id.card_view).setOnClickListener(new View.OnClickListener() {
 
             @Override
@@ -61,7 +69,9 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.ViewHolder> {
                 intent.putExtra("Title", dataset.get(position).title);
                 intent.putExtra("Description", dataset.get(position).description);
                 intent.putExtra("Price", dataset.get(position).price);
-                intent.putExtra("PriceDrop", dataset.get(position).priceDrop);
+                intent.putExtra("Discount", discountInPercent);
+                intent.putExtra("PriceDrop", priceChangeAbs);
+                intent.putExtra("SuggestedPrice", dataset.get(position).suggestedPrice);
                 intent.putExtra("Availability", dataset.get(position).availability);
                 intent.putExtra("Prime", dataset.get(position).prime);
                 intent.putExtra("Seller", dataset.get(position).seller);
