@@ -1,6 +1,8 @@
 package com.dev.amazonadvisor;
 
+import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.Snackbar;
@@ -89,12 +91,16 @@ public class MainActivity extends AppCompatActivity {
         navigationDrawer.getActionBarDrawerToggle().setDrawerIndicatorEnabled(true);
         viewPager = (ViewPager) findViewById(R.id.viewpager);
         viewPagerTab = (SmartTabLayout) findViewById(R.id.viewpagertab);
-        if(loggedInState)
+        amazonLoginButton = (ImageView) findViewById(R.id.login_with_amazon);
+        AmazonLocaleUtils.setLocale(this);
+        if(loggedInState) {
             authorizeInAppFeatures();
+            Intent intent = new Intent(getApplicationContext(), UpdateListService.class);
+            ServiceStarter.startServiceWithRunningControl(intent, UpdateListService.class, this);
+        }
         else
         {
             final RelativeLayout mainLayout = (RelativeLayout) findViewById(R.id.main_relative_layout);
-            amazonLoginButton = (ImageView) findViewById(R.id.login_with_amazon);
             requestContext = RequestContext.create(this);
             requestContext.registerListener(new AuthorizeListener() {
 
@@ -116,7 +122,8 @@ public class MainActivity extends AppCompatActivity {
                             return null;
                         }
                     }.execute();
-
+                    Intent intent = new Intent(getApplicationContext(), UpdateListService.class);
+                    ServiceStarter.startServiceWithRunningControl(intent, UpdateListService.class, MainActivity.this);
                 }
 
                 @Override
@@ -191,6 +198,7 @@ public class MainActivity extends AppCompatActivity {
                                         cancelAuthorizeInAppFeatures();
                                         DatabaseHandler db = new DatabaseHandler(MainActivity.this);
                                         db.erase();
+                                        getSharedPreferences("LIST_DATA", Activity.MODE_PRIVATE).edit().putString("LIST_LINK", "").apply();
                                         RelativeLayout mainLayout = (RelativeLayout) findViewById(R.id.main_relative_layout);
                                         Snackbar.make(mainLayout,
                                                 "Logged out successful",

@@ -50,6 +50,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import javax.net.ssl.HttpsURLConnection;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
@@ -121,7 +122,6 @@ public class FollowingFragment extends Fragment {
         );
         menuFab.setClosedOnTouchOutside(true);
         menuFab.hideMenuButton(false);
-        AmazonLocaleUtils.setLocale(getActivity());
         initiateAmazonService(false, savedInstanceState);
         Log.v("Test", "Test");
     }
@@ -153,7 +153,6 @@ public class FollowingFragment extends Fragment {
 
             createCustomAnimation();
     }
-
 
     private void createCustomAnimation() {
 
@@ -248,60 +247,9 @@ public class FollowingFragment extends Fragment {
             productsBackup = products;
             try
             {
-                url = new URL("https://" + AmazonLocaleUtils.getLocalizedURL() + "/gp/registry/search");
-                Map<String,Object> params = new LinkedHashMap<>();
-                params.put("sortby", "");
-                params.put("index", "it-xml-wishlist");
-                params.put("field-name", getActivity().getSharedPreferences("ACCOUNT_INFO", Context.MODE_PRIVATE)
-                                                      .getString("EMAIL", ""));
-                params.put("field-firstname", "");
-                params.put("field-lastname", "");
-                params.put("nameOrEmail", "");
-                params.put("submit.search", "");
-                StringBuilder postData = new StringBuilder();
-                for (Map.Entry<String,Object> param : params.entrySet()) {
-                    if (postData.length() != 0) postData.append('&');
-                    postData.append(URLEncoder.encode(param.getKey(), "UTF-8"));
-                    postData.append('=');
-                    postData.append(URLEncoder.encode(String.valueOf(param.getValue()), "UTF-8"));
-                }
-                byte[] postDataBytes = postData.toString().getBytes("UTF-8");
-
-                conn = (HttpURLConnection)url.openConnection();
-                conn.setRequestMethod("POST");
-                conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-                conn.setRequestProperty("Content-Length", String.valueOf(postDataBytes.length));
-                conn.setDoOutput(true);
-                conn.getOutputStream().write(postDataBytes);
-
-                reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-                StringBuilder result = new StringBuilder();
-                String line;
-                while((line = reader.readLine()) != null)
-                    result.append(line);
-                System.out.println(result);
-
-                org.jsoup.nodes.Document doc = Jsoup.parseBodyFragment(result.toString());
-                Element body = doc.body();
-                Elements found = body.getElementsByClass("a-box-inner a-padding-small");
-                if(found.size() == 0)
-                    found = body.getElementsByClass("a-expander-content a-expander-section-content a-section-expander-inner");
-                String listAddress = "";
-                for(int i = 0; i < found.size(); i++)
-                {
-                    Elements links = found.get(i).getElementsByClass("a-link-normal a-declarative");
-                    String title = links.get(0).attr("title").toString();
-                    System.out.println(title);
-                    if(title.contains("Advisor"))
-                    {
-                        listAddress = links.get(0).attr("href").toString();
-                        break;
-                    }
-                }
-                System.out.println("ListAddress :" + listAddress + "\n\n\n");
-                reader.close();
-
-
+                String listAddress = getContext().getSharedPreferences("LIST_DATA", Activity.MODE_PRIVATE).getString("LIST_LINK", "");
+                if(listAddress.equals(""))
+                    listAddress = AmazonListAPI.fetchListLink(getContext());
                 boolean done = false;
                 while(!done)
                     try
@@ -312,30 +260,10 @@ public class FollowingFragment extends Fragment {
                     catch(IOException exc)
                     {
                         exc.printStackTrace();
+                        listAddress = AmazonListAPI.fetchListLink(getContext());
                     }
-                result = new StringBuilder();
-                while((line = reader.readLine()) != null)
-                    result.append(line);
-                writeToFile(result.toString(), getContext());
-                doc = Jsoup.parseBodyFragment(result.toString());
-                body = doc.body();
-                found = body.getElementsByClass("a-text-center a-fixed-left-grid-col g-itemImage a-col-left");
-                System.out.println(found.size());
-                for(int i = 0; i < found.size(); i++)
-                {
-                    Elements links = found.get(i).getElementsByClass("a-link-normal a-declarative");
-                    try {
-                        String href = links.get(0).attr("href").toString();
-                        href = href.replace("/dp/", "");
-                        String temp = href.substring(0, href.indexOf("/"));
-                        Log.v("ASIN", temp);
-                        productIDs.add(temp);
-                    }
-                    catch (Exception exc) //general excpetion for product code not found, e.g. product removed by vendor from amazon
-                    {
-                        exc.printStackTrace();
-                    }
-                }
+                BufferedReader listResponse = AmazonListAPI.initConnection(listAddress);
+                productIDs = AmazonListAPI.fetchListProductsASIN(listResponse);
             }
             catch(MalformedURLException exc)
             {
@@ -387,6 +315,8 @@ public class FollowingFragment extends Fragment {
             adapter = new ListAdapter(products, getActivity());
             return products;
         }
+
+
 
         private void writeToFile(String data,Context context) {
             try {
