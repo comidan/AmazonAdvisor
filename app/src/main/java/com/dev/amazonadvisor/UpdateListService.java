@@ -36,7 +36,7 @@ public class UpdateListService extends Service {
         @Override
         public int onStartCommand(Intent intent, int flags, int startId) {
             final String listAddress = getSharedPreferences("LIST_DATA", Activity.MODE_PRIVATE).getString("LIST_LINK", "");
-
+            AmazonLocaleUtils.setLocale(UpdateListService.this);
                 new AsyncTask<Void, Void, Void>()
                 {
 

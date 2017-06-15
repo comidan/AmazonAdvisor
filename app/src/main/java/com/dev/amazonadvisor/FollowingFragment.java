@@ -123,7 +123,6 @@ public class FollowingFragment extends Fragment {
         menuFab.setClosedOnTouchOutside(true);
         menuFab.hideMenuButton(false);
         initiateAmazonService(false, savedInstanceState);
-        Log.v("Test", "Test");
     }
 
     @Override
@@ -468,5 +467,11 @@ public class FollowingFragment extends Fragment {
             Element body = doc.body();
             return body.getElementsByClass("a-size-base a-color-secondary").html();
         }
+    }
+
+    public static void eraseList()
+    {
+        if(products != null)
+            products.clear();
     }
 }

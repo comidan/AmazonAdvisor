@@ -1,6 +1,7 @@
 package com.dev.amazonadvisor;
 
 import android.app.Activity;
+import android.content.Context;
 
 import java.util.Locale;
 
@@ -11,23 +12,23 @@ import java.util.Locale;
 public class AmazonLocaleUtils {
 
     static Locale locale = null;
-    private static Activity activity;
+    private static Context context;
 
-    static void setLocale(Activity actitity)
+    static void setLocale(Context context)
     {
-        AmazonLocaleUtils.activity = actitity;
-        locale = getLocale(actitity);
+        AmazonLocaleUtils.context = context;
+        locale = getLocale(context);
     }
 
-    private static Locale getLocale(Activity activity)
+    private static Locale getLocale(Context context)
     {
-        return activity.getResources().getConfiguration().locale;
+        return context.getResources().getConfiguration().locale;
     }
 
     static String getLocalizedAWSURL()
     {
         if(locale == null)
-            locale = getLocale(activity);
+            locale = getLocale(context);
 
         if(locale.equals(Locale.ITALY))
             return "webservices.amazon.it";
@@ -49,7 +50,7 @@ public class AmazonLocaleUtils {
     static String getLocalizedURL()
     {
         if(locale == null)
-            locale = getLocale(activity);
+            locale = getLocale(context);
 
         if(locale.equals(Locale.ITALY))
             return "www.amazon.it";
@@ -71,7 +72,7 @@ public class AmazonLocaleUtils {
     static String getLocalizedCode()
     {
         if(locale == null)
-            locale = getLocale(activity);
+            locale = getLocale(context);
         return locale.getLanguage();
     }
 }

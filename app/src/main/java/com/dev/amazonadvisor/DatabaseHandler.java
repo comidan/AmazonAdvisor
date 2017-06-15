@@ -114,7 +114,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
 
     public void erase() {
         SQLiteDatabase db = this.getWritableDatabase();
-        db.rawQuery("DELETE FROM " + TABLE_PRODUCTS, null);
+        db.execSQL("DELETE FROM " + TABLE_PRODUCTS);
         db.close();
     }
 
@@ -122,8 +122,9 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         String countQuery = "SELECT  * FROM " + TABLE_PRODUCTS;
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor cursor = db.rawQuery(countQuery, null);
+        int count = cursor.getCount();
         cursor.close();
-        return cursor.getCount();
+        return count;
     }
 
 }

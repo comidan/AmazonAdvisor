@@ -9,6 +9,7 @@ import android.support.design.widget.Snackbar;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -198,6 +199,8 @@ public class MainActivity extends AppCompatActivity {
                                         cancelAuthorizeInAppFeatures();
                                         DatabaseHandler db = new DatabaseHandler(MainActivity.this);
                                         db.erase();
+                                        FollowingFragment.eraseList();
+                                        Log.v("AfterDeleteCount", db.getProductsCount()+"");
                                         getSharedPreferences("LIST_DATA", Activity.MODE_PRIVATE).edit().putString("LIST_LINK", "").apply();
                                         RelativeLayout mainLayout = (RelativeLayout) findViewById(R.id.main_relative_layout);
                                         Snackbar.make(mainLayout,
